@@ -75,15 +75,10 @@ WSGI_APPLICATION = "Proyecto.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "InBalance",
-        "USER": "ADMIN",
-        "PASSWORD": "InBalance",
-        "HOST": "ec2-54-90-194-234.compute-1.amazonaws.com",
-        "PORT": "3306",
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
@@ -130,3 +125,13 @@ MAILERS = {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
+
+
+# Redirigir al inicio después de iniciar sesión
+LOGIN_REDIRECT_URL = '/'
+
+# Redirigir al login después de cerrar sesión
+LOGOUT_REDIRECT_URL = 'login'
+
+# Ruta a la que redirige si alguien intenta entrar a una vista protegida
+LOGIN_URL = 'login'

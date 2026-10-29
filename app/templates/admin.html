@@ -1,44 +1,66 @@
 {% load static %}
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap demo</title>
+    <title>InBalance - Panel de Administración</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+      body {
+        background-color: #f4f7f6;
+      }
+      .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      }
+    </style>
   </head>
   <body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">Navbar</a>
+        <a class="navbar-brand fw-bold text-primary" href="/">InBalance</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">Home</a>
+              <a class="nav-link" href="/">Inicio</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Link</a>
+              <a class="nav-link" href="#">Pomodoro</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Usuario
+              </a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{% url 'user_view' %}">Perfil</a></li>
+                <li><a class="dropdown-item active" href="{% url 'admin_view' %}">Administrador</a></li>
+                <li><a class="dropdown-item" href="#">Recursos</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Configuración</a></li>
+              </ul>
             </li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Dropdown
+                Calendarizacion
               </a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Action</a></li>
-                <li><a class="dropdown-item" href="#">Another action</a></li>
+                <li><a class="dropdown-item" href="#">Semanal</a></li>
+                <li><a class="dropdown-item" href="#">Mensual</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                <li><a class="dropdown-item" href="#">Administrar</a></li>
               </ul>
             </li>
-            <li class="nav-item">
-              <a class="nav-link disabled" aria-disabled="true">Disabled</a>
-            </li>
           </ul>
+
           <form class="d-flex" role="search">
             <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"/>
             <button class="btn btn-outline-success" type="submit">Search</button>
@@ -47,34 +69,160 @@
       </div>
     </nav>
 
-    <!-- Contenido principal -->
-    <div class="container my-4">
-      <h1 class="text-danger">ADIOS POLLO PANCHOOOOO</h1>
-    </div>
+    <!-- Panel de Administrador -->
+    <div class="container py-4">
 
-    <!-- Carrusel -->
-    <div id="carouselExample" class="carousel slide container mb-5">
-      <div class="carousel-inner">
-        <div class="carousel-item active">
-          <img src="{% static 'gatito.jpeg' %}" class="d-block w-100" alt="Gatito">
+      <!-- Cabecera y Navegación Rápida -->
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 bg-white p-4 rounded-3 shadow-sm">
+        <div>
+          <span class="badge bg-dark mb-1">Modo Administrador</span>
+          <h3 class="fw-bold mb-1">Panel de Control del Sistema</h3>
+          <p class="text-muted mb-0">Gestión de usuarios, monitoreo de hábitos y configuración de recompensas.</p>
         </div>
-        <div class="carousel-item">
-          <img src="{% static 'pollo.jpg' %}" class="d-block w-100" alt="Pollo">
-        </div>
-        <div class="carousel-item">
-          <img src="{% static '911.jpeg' %}" class="d-block w-100" alt="911">
+        <div class="d-flex gap-2 mt-3 mt-md-0">
+          <a href="/" class="btn btn-outline-secondary px-3">
+            <i class="bi bi-house me-1"></i>Inicio
+          </a>
+          <a href="{% url 'user_view' %}" class="btn btn-primary px-3">
+            <i class="bi bi-person-circle me-1"></i>Vista Usuario
+          </a>
         </div>
       </div>
-      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Previous</span>
-      </button>
-      <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Next</span>
-      </button>
+
+      <!-- Métricas Globales del Sistema -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card p-3 h-100">
+            <span class="text-muted small">Usuarios Activos</span>
+            <h4 class="fw-bold text-dark mt-1 mb-1">148</h4>
+            <small class="text-success"><i class="bi bi-arrow-up-short"></i> +12% esta semana</small>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card p-3 h-100">
+            <span class="text-muted small">Riesgo de Atraso Global</span>
+            <h4 class="fw-bold text-warning mt-1 mb-1">18 Usuarios</h4>
+            <small class="text-muted">Con alertas activas</small>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card p-3 h-100">
+            <span class="text-muted small">Pomodoros Completados</span>
+            <h4 class="fw-bold text-danger mt-1 mb-1">1,420</h4>
+            <small class="text-muted">Total acumulado del mes</small>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card p-3 h-100">
+            <span class="text-muted small">Rewards Canjeados</span>
+            <h4 class="fw-bold text-primary mt-1 mb-1">315</h4>
+            <small class="text-muted">Promedio 85% checklist</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gestión de Usuarios y Configuración de Parámetros -->
+      <div class="row g-4">
+        
+        <!-- Tabla de Monitoreo de Usuarios -->
+        <div class="col-lg-8">
+          <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Monitoreo de Estudiantes</h6>
+              <button class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i>Exportar Reporte</button>
+            </div>
+            
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Hábitos</th>
+                    <th>Riesgo Atraso</th>
+                    <th>XP</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">Camila Rojas</div>
+                      <small class="text-muted">c.rojas@alumnos.cl</small>
+                    </td>
+                    <td>85%</td>
+                    <td><span class="badge bg-success-subtle text-success">Bajo</span></td>
+                    <td>340 XP</td>
+                    <td>
+                      <button class="btn btn-sm btn-light border" title="Enviar recordatorio"><i class="bi bi-bell"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">Matías Soto</div>
+                      <small class="text-muted">m.soto@alumnos.cl</small>
+                    </td>
+                    <td>40%</td>
+                    <td><span class="badge bg-danger-subtle text-danger">Alto</span></td>
+                    <td>60 XP</td>
+                    <td>
+                      <button class="btn btn-sm btn-light border" title="Enviar recordatorio"><i class="bi bi-bell"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">Valentina Díaz</div>
+                      <small class="text-muted">v.diaz@alumnos.cl</small>
+                    </td>
+                    <td>65%</td>
+                    <td><span class="badge bg-warning-subtle text-warning">Medio</span></td>
+                    <td>190 XP</td>
+                    <td>
+                      <button class="btn btn-sm btn-light border" title="Enviar recordatorio"><i class="bi bi-bell"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuración de Rewards y Alertas Globales -->
+        <div class="col-lg-4">
+          <div class="card p-4 h-100">
+            <h6 class="fw-bold mb-3"><i class="bi bi-sliders text-dark me-2"></i>Parámetros del Sistema</h6>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">XP por Tarea en Checklist</label>
+              <input type="number" class="form-control form-control-sm" value="25">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Tiempo Pomodoro por defecto (min)</label>
+              <input type="number" class="form-control form-control-sm" value="25">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Enviar Recordatorio Global</label>
+              <input type="text" class="form-control form-control-sm mb-2" placeholder="Mensaje para todos los usuarios...">
+              <button class="btn btn-sm btn-warning w-100">
+                <i class="bi bi-megaphone me-1"></i>Enviar Alerta Anti-Atraso
+              </button>
+            </div>
+
+            <hr class="my-2">
+
+            <button class="btn btn-sm btn-dark w-100 mt-auto">Guardar Cambios</button>
+          </div>
+        </div>
+
+      </div>
+
     </div>
 
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
   </body>
 </html>
