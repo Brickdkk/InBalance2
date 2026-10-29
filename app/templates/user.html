@@ -1,1 +1,875 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InBalance - Dashboard</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#F8F9FE',
+                            purple: '#7C3AED',
+                            'purple-hover': '#6D28D9',
+                            'purple-light': '#F3E8FF',
+                            'purple-subtle': '#FAF8FF',
+                            dark: '#0F172A',
+                            muted: '#64748B',
+                            border: '#F1F5F9'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif']
+                    },
+                    borderRadius: {
+                        'card': '18px'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <style>
+        body {
+            background-color: #F8F9FE;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #0F172A;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F8F9FE;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
+        }
+
+        /* Card Hover Effects */
+        .dashboard-card {
+            background: #FFFFFF;
+            border: 1px solid #F1F5F9;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.03);
+            border-radius: 18px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dashboard-card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -4px rgba(124, 58, 237, 0.08);
+            border-color: #E9D5FF;
+        }
+
+        /* Circular Timer Styling */
+        .timer-circle-wrap {
+            position: relative;
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            box-shadow: inset 0 0 0 10px #F1F5F9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .timer-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .timer-svg circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+        }
+
+        .timer-bg {
+            stroke: #F1F5F9;
+        }
+
+        .timer-progress {
+            stroke: #7C3AED;
+            stroke-dasharray: 471; /* 2 * PI * 75 */
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        /* Modal backdrop blurring */
+        .modal-backdrop {
+            background-color: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside id="sidebar" class="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 md:fixed md:inset-y-0 md:left-0 z-30 flex flex-col justify-between p-4 transition-all duration-300">
+        <div>
+            <!-- Top Brand Header -->
+            <div class="flex items-center justify-between mb-6 px-2 pt-1">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm tracking-tight shadow-sm">
+                        IB
+                    </div>
+                    <span class="font-extrabold text-xl text-slate-900 tracking-tight">InBalance</span>
+                </div>
+                <!-- Mobile toggle button -->
+                <button id="mobileMenuBtn" class="md:hidden text-slate-500 hover:text-slate-700 p-2">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+            </div>
+
+            <!-- User Profile Widget -->
+            <div class="flex items-center gap-3 mb-6 px-2 py-2 rounded-xl bg-slate-50/80 border border-slate-100">
+                <div class="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+                    CM
+                </div>
+                <div class="overflow-hidden">
+                    <h4 class="font-bold text-sm text-slate-900 truncate leading-snug">Carlos Méndez</h4>
+                    <p class="text-xs text-slate-500 truncate">Nivel 12 · 3,892 XP</p>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="space-y-1" id="navContainer">
+                <a href="#overview" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl font-semibold text-sm transition-all bg-purple-50 text-brand-purple">
+                    <i class="fa-solid fa-border-all text-base w-5 text-center"></i>
+                    <span>Overview</span>
+                </a>
+                <a href="#metodos" onclick="openMethodsModal()" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl font-semibold text-sm text-slate-500 hover:text-brand-purple hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles text-base w-5 text-center"></i>
+                    <span>Mis Métodos</span>
+                </a>
+                <a href="#tareas" onclick="openTasksModal()" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl font-semibold text-sm text-slate-500 hover:text-brand-purple hover:bg-slate-50 transition-all">
+                    <i class="fa-regular fa-square-check text-base w-5 text-center"></i>
+                    <span>Tareas</span>
+                    <span id="navTaskBadge" class="ml-auto bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-bold">3</span>
+                </a>
+                <a href="#ranking" onclick="openRankingModal()" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl font-semibold text-sm text-slate-500 hover:text-brand-purple hover:bg-slate-50 transition-all">
+                    <i class="fa-solid fa-trophy text-base w-5 text-center"></i>
+                    <span>Ranking</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer XP Progress -->
+        <div class="pt-4 border-t border-slate-100 mt-6 md:mt-0">
+            <div class="flex justify-between items-center mb-1.5 text-xs font-semibold">
+                <span class="text-slate-500">XP al siguiente nivel</span>
+                <span class="text-brand-purple font-bold">3,892 / 4,500</span>
+            </div>
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div class="bg-brand-purple h-full rounded-full transition-all duration-500" style="width: 86.4%"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN CONTENT AREA ==================== -->
+    <main class="flex-1 md:ml-64 p-4 md:p-8 max-w-7xl mx-auto w-full">
+        
+        <!-- Header Bar -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+                <p class="text-xs md:text-sm font-semibold text-slate-400 mb-0.5">Jueves, 29 de octubre</p>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Buen día, Carlita Barros</h1>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Streak Badge -->
+                <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-orange-50 border border-orange-200/60 text-orange-600 font-bold text-sm shadow-sm cursor-pointer hover:bg-orange-100 transition-colors" title="¡Mantén tu racha diaria estudiando!">
+                    <span>Racha de 14 días</span>
+                </div>
+                <a href="{% url 'index' %}" class="inline-flex items-center gap-1 text-slate-500 hover:text-slate-800 font-semibold text-sm px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-all">
+                    <i class="fa-solid fa-arrow-left text-xs"></i>
+                    <span>Inicio</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- ROW 1: 4 Metric Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            
+            <!-- Card 1: Horas esta semana -->
+            <div onclick="openLogHoursModal()" class="dashboard-card dashboard-card-hover p-5 cursor-pointer relative overflow-hidden group">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-500 block mb-1">Horas esta semana</span>
+                        <h2 id="totalHoursText" class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight my-1">24.5h</h2>
+                        <span class="text-xs font-bold text-brand-purple bg-purple-50 px-2 py-0.5 rounded-md inline-block mt-1">+2.4h vs semana pasada</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-purple-100 text-brand-purple flex items-center justify-center text-base flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fa-regular fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Tareas completadas -->
+            <div onclick="openTasksModal()" class="dashboard-card dashboard-card-hover p-5 cursor-pointer relative overflow-hidden group">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-500 block mb-1">Tareas completadas</span>
+                        <h2 id="completedTasksCount" class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight my-1">12</h2>
+                        <span id="pendingTasksBadge" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md inline-block mt-1">3 pendientes hoy</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-base flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: XP ganado -->
+            <div onclick="showToast('¡Has ganado 1,240 XP esta semana! Sigue así para llegar al Nivel 13.')" class="dashboard-card dashboard-card-hover p-5 cursor-pointer relative overflow-hidden group">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-500 block mb-1">XP ganado</span>
+                        <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight my-1">1,240</h2>
+                        <span class="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md inline-block mt-1">esta semana</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center text-base flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Posición ranking -->
+            <div onclick="openRankingModal()" class="dashboard-card dashboard-card-hover p-5 cursor-pointer relative overflow-hidden group">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-500 block mb-1">Posición ranking</span>
+                        <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight my-1">#3</h2>
+                        <span class="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md inline-block mt-1">de 240 estudiantes</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-amber-100/80 text-amber-600 flex items-center justify-center text-base flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ROW 2: Study Hours Chart & Active Pomodoro Session -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+            
+            <!-- Left Chart (8 cols) -->
+            <div class="lg:col-span-8 dashboard-card p-5 md:p-6 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-slate-900 text-base md:text-lg">Horas de estudio</h3>
+                    
+                    <!-- Timeframe Selector -->
+                    <div class="relative">
+                        <select id="timeframeSelect" class="bg-slate-50 border border-slate-200 text-slate-600 text-xs font-semibold rounded-lg px-3 py-1.5 pr-7 appearance-none cursor-pointer hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-purple">
+                            <option value="week">Esta semana</option>
+                            <option value="last_week">Semana pasada</option>
+                            <option value="month">Este mes</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs absolute right-2.5 top-2.5 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="relative w-full h-[230px] md:h-[260px]">
+                    <canvas id="studyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Pomodoro Widget (4 cols) -->
+            <div class="lg:col-span-4 dashboard-card p-5 md:p-6 flex flex-col justify-between text-center relative overflow-hidden">
+                <div class="flex items-center justify-between w-full mb-2">
+                    <h3 class="font-bold text-slate-900 text-base">Sesión activa</h3>
+                    <!-- Mode Pills -->
+                    <div class="flex bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold">
+                        <button onclick="setTimerMode('pomo')" id="btnModePomo" class="px-2 py-0.5 rounded-md bg-white text-slate-900 shadow-sm">Pomo</button>
+                        <button onclick="setTimerMode('short')" id="btnModeShort" class="px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-900">Descanso</button>
+                    </div>
+                </div>
+
+                <!-- Circular Timer Display -->
+                <div class="my-auto py-2">
+                    <div class="timer-circle-wrap">
+                        <svg class="timer-svg" viewBox="0 0 160 160">
+                            <circle class="timer-bg" cx="80" cy="80" r="75"></circle>
+                            <circle id="timerProgressRing" class="timer-progress" cx="80" cy="80" r="75"></circle>
+                        </svg>
+                        <div class="z-10 flex flex-col items-center">
+                            <span id="timerDisplay" class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">25:00</span>
+                            <span id="timerLabel" class="text-xs font-semibold text-slate-400 mt-1">Pomodoro</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="space-y-2 mt-2">
+                    <button id="startTimerBtn" onclick="toggleTimer()" class="w-full bg-brand-purple hover:bg-brand-purple-hover text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        <i id="startTimerIcon" class="fa-solid fa-play text-xs"></i>
+                        <span id="startTimerText">Iniciar sesión</span>
+                    </button>
+                    <button onclick="resetTimer()" class="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors py-1">
+                        <i class="fa-solid fa-rotate-right text-[10px] mr-1"></i> Reiniciar
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ROW 3: Active Methods -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between">
+                <h3 class="font-bold text-slate-900 text-base md:text-lg">Métodos activos</h3>
+                <a href="#todos" onclick="openMethodsModal()" class="text-xs font-bold text-brand-purple hover:underline flex items-center gap-1">
+                    <span>Ver todos</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Method 1: Pomodoro Gamificado -->
+                <div class="dashboard-card dashboard-card-hover p-4 md:p-5 cursor-pointer bg-brand-purple-subtle/60" onclick="openMethodDetails('Pomodoro Gamificado', 72, '24 sesiones', '7 días')">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-bold text-slate-900 text-sm md:text-base">Pomodoro Gamificado</h4>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-100 text-brand-purple font-bold text-xs">
+                            <span>Racha de</span> 7 días
+                        </span>
+                    </div>
+                    <p class="text-xs font-medium text-slate-500 mb-3">24 sesiones &nbsp;·&nbsp; 72% del programa</p>
+                    
+                    <div class="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden">
+                        <div class="bg-brand-purple h-full rounded-full transition-all duration-700" style="width: 72%"></div>
+                    </div>
+                </div>
+
+                <!-- Method 2: Mind Map Sprint -->
+                <div class="dashboard-card dashboard-card-hover p-4 md:p-5 cursor-pointer" onclick="openMethodDetails('Mind Map Sprint', 45, '8 sesiones', '3 días')">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-bold text-slate-900 text-sm md:text-base">Mind Map Sprint</h4>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">
+                            <span>Racha de</span> 3 días
+                        </span>
+                    </div>
+                    <p class="text-xs font-medium text-slate-500 mb-3">8 sesiones &nbsp;·&nbsp; 45% del programa</p>
+                    
+                    <div class="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden">
+                        <div class="bg-emerald-500 h-full rounded-full transition-all duration-700" style="width: 45%"></div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Tasks Modal -->
+    <div id="tasksModal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative animate-in fade-in zoom-in-95 duration-200">
+            <button onclick="closeTasksModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg">Tareas Pendientes</h3>
+                    <p class="text-xs text-slate-500">Organiza tu plan de estudio de hoy</p>
+                </div>
+            </div>
+
+            <div class="space-y-2 mb-6" id="taskListContainer">
+                <!-- Task Items populated by JS -->
+            </div>
+
+            <div class="flex gap-2">
+                <input type="text" id="newTaskInput" placeholder="Añadir nueva tarea..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple">
+                <button onclick="addNewTask()" class="bg-brand-purple text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-brand-purple-hover transition-colors">
+                    + Agregar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Hours Modal -->
+    <div id="logHoursModal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 relative">
+            <button onclick="closeLogHoursModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-purple-100 text-brand-purple flex items-center justify-center">
+                    <i class="fa-regular fa-clock"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg">Registrar Horas</h3>
+                    <p class="text-xs text-slate-500">Suma horas a tu gráfico de esta semana</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Día de la semana</label>
+                    <select id="logDaySelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold text-slate-800">
+                        <option value="0">Lunes</option>
+                        <option value="1">Martes</option>
+                        <option value="2">Miércoles</option>
+                        <option value="3">Jueves</option>
+                        <option value="4">Viernes</option>
+                        <option value="5">Sábado</option>
+                        <option value="6">Domingo</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Horas dedicadas</label>
+                    <input type="number" id="logHoursInput" min="0.5" max="12" step="0.5" value="1.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-purple">
+                </div>
+            </div>
+
+            <button onclick="submitLoggedHours()" class="w-full bg-brand-purple text-white font-bold py-2.5 rounded-xl hover:bg-brand-purple-hover transition-colors">
+                Guardar registro
+            </button>
+        </div>
+    </div>
+
+    <!-- Ranking Leaderboard Modal -->
+    <div id="rankingModal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+            <button onclick="closeRankingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg">Ranking Estudiantil</h3>
+                    <p class="text-xs text-slate-500">Top estudiantes esta semana</p>
+                </div>
+            </div>
+
+            <div class="space-y-2 mb-4">
+                <div class="flex items-center justify-between p-3 rounded-xl bg-amber-50/60 border border-amber-200/50">
+                    <div class="flex items-center gap-3">
+                        <span class="font-extrabold text-amber-600 w-4 text-center">1</span>
+                        <div class="w-8 h-8 rounded-full bg-amber-500 text-white font-bold text-xs flex items-center justify-center">SL</div>
+                        <div>
+                            <p class="font-bold text-sm text-slate-900">Ele Tillemann</p>
+                            <p class="text-[10px] text-slate-500">Nivel 15 · 4,920 XP</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-amber-600">🥇 Gold</span>
+                </div>
+
+                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                    <div class="flex items-center gap-3">
+                        <span class="font-extrabold text-slate-400 w-4 text-center">2</span>
+                        <div class="w-8 h-8 rounded-full bg-slate-600 text-white font-bold text-xs flex items-center justify-center">MA</div>
+                        <div>
+                            <p class="font-bold text-sm text-slate-900">Seba Anguita</p>
+                            <p class="text-[10px] text-slate-500">Nivel 13 · 4,110 XP</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500">🥈 Silver</span>
+                </div>
+
+                <!-- Current User -->
+                <div class="flex items-center justify-between p-3 rounded-xl bg-purple-50 border border-purple-200">
+                    <div class="flex items-center gap-3">
+                        <span class="font-extrabold text-brand-purple w-4 text-center">3</span>
+                        <div class="w-8 h-8 rounded-full bg-amber-500 text-white font-bold text-xs flex items-center justify-center">CM</div>
+                        <div>
+                            <p class="font-bold text-sm text-slate-900">Carlita Barros (Tú)</p>
+                            <p class="text-[10px] text-brand-purple font-semibold">Nivel 12 · 3,892 XP</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-brand-purple">🥉 Bronze</span>
+                </div>
+
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <span class="font-extrabold text-slate-400 w-4 text-center">4</span>
+                        <div class="w-8 h-8 rounded-full bg-sky-500 text-white font-bold text-xs flex items-center justify-center">VR</div>
+                        <div>
+                            <p class="font-bold text-sm text-slate-900">Sofía Araos</p>
+                            <p class="text-[10px] text-slate-500">Nivel 11 · 3,450 XP</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-slate-400">#4</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold z-50 flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <i class="fa-solid fa-circle-info text-brand-purple"></i>
+        <span id="toastMessage">Notificación</span>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        // --- 1. STATE MANAGEMENT ---
+        let studyData = {
+            week: [2.5, 4.0, 1.8, 5.0, 3.5, 6.0, 3.0],
+            last_week: [3.0, 3.5, 2.0, 4.2, 4.0, 5.0, 2.0],
+            month: [18, 22, 19, 25, 28, 30, 24]
+        };
+
+        let tasks = [
+            { id: 1, title: 'Revisar capítulo 4 de Cálculo', completed: false },
+            { id: 2, title: 'Completar test de Pomodoro Gamificado', completed: false },
+            { id: 3, title: 'Resumir lecturas de Historia', completed: false },
+            { id: 4, title: 'Práctica de ejercicios de Física', completed: true },
+            { id: 5, title: 'Entrega de avance del proyecto', completed: true }
+        ];
+
+        let studyChartInstance = null;
+
+        // --- 2. INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            renderTasks();
+            updateTaskBadges();
+
+            // Handle timeframe selector
+            document.getElementById('timeframeSelect').addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (studyChartInstance) {
+                    studyChartInstance.data.datasets[0].data = studyData[value];
+                    studyChartInstance.update();
+                }
+                showToast(`Gráfico actualizado a: ${e.target.options[e.target.selectedIndex].text}`);
+            });
+
+            // Mobile menu toggle
+            document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+                const nav = document.getElementById('navContainer');
+                nav.classList.toggle('hidden');
+            });
+        });
+
+        // --- 3. CHART.JS CONFIGURATION ---
+        function initChart() {
+            const ctx = document.getElementById('studyChart').getContext('2d');
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 240);
+            gradient.addColorStop(0, 'rgba(124, 58, 237, 0.28)');
+            gradient.addColorStop(1, 'rgba(124, 58, 237, 0.0)');
+
+            studyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                    datasets: [{
+                        label: 'Horas de estudio',
+                        data: studyData.week,
+                        borderColor: '#7C3AED',
+                        borderWidth: 3,
+                        fill: true,
+                        backgroundColor: gradient,
+                        tension: 0.42,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#7C3AED',
+                        pointHoverBorderColor: '#FFFFFF',
+                        pointHoverBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0F172A',
+                            titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+                            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+                            padding: 10,
+                            displayColors: false,
+                            callbacks: {
+                                label: (context) => `${context.parsed.y} horas`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: '#94A3B8',
+                                font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
+                            }
+                        },
+                        y: {
+                            min: 0,
+                            max: 8,
+                            ticks: {
+                                stepSize: 2,
+                                color: '#94A3B8',
+                                font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
+                            },
+                            grid: {
+                                color: '#F1F5F9',
+                                borderDash: [4, 4]
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- 4. POMODORO TIMER LOGIC ---
+        let timerSeconds = 25 * 60;
+        let totalModeSeconds = 25 * 60;
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60);
+            const secs = timerSeconds % 60;
+            document.getElementById('timerDisplay').innerText = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+            // Update Progress Ring
+            const ring = document.getElementById('timerProgressRing');
+            const circumference = 471; // 2 * PI * 75
+            const progress = (totalModeSeconds - timerSeconds) / totalModeSeconds;
+            const offset = circumference * progress;
+            ring.style.strokeDashoffset = offset;
+        }
+
+        function toggleTimer() {
+            const btnText = document.getElementById('startTimerText');
+            const btnIcon = document.getElementById('startTimerIcon');
+
+            if (isTimerRunning) {
+                // Pause
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                btnText.innerText = 'Continuar';
+                btnIcon.className = 'fa-solid fa-play text-xs';
+                showToast('Sesión pausada');
+            } else {
+                // Start
+                isTimerRunning = true;
+                btnText.innerText = 'Pausar';
+                btnIcon.className = 'fa-solid fa-pause text-xs';
+
+                timerInterval = setInterval(() => {
+                    if (timerSeconds > 0) {
+                        timerSeconds--;
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        btnText.innerText = 'Iniciar sesión';
+                        btnIcon.className = 'fa-solid fa-play text-xs';
+                        showToast('🎉 ¡Sesión completada! Ganaste +50 XP');
+                        playChime();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            timerSeconds = totalModeSeconds;
+            updateTimerDisplay();
+            document.getElementById('startTimerText').innerText = 'Iniciar sesión';
+            document.getElementById('startTimerIcon').className = 'fa-solid fa-play text-xs';
+        }
+
+        function setTimerMode(mode) {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            
+            const btnPomo = document.getElementById('btnModePomo');
+            const btnShort = document.getElementById('btnModeShort');
+            const timerLabel = document.getElementById('timerLabel');
+
+            if (mode === 'pomo') {
+                totalModeSeconds = 25 * 60;
+                timerLabel.innerText = 'Pomodoro';
+                btnPomo.className = 'px-2 py-0.5 rounded-md bg-white text-slate-900 shadow-sm';
+                btnShort.className = 'px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-900';
+            } else {
+                totalModeSeconds = 5 * 60;
+                timerLabel.innerText = 'Descanso corto';
+                btnShort.className = 'px-2 py-0.5 rounded-md bg-white text-slate-900 shadow-sm';
+                btnPomo.className = 'px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-900';
+            }
+
+            timerSeconds = totalModeSeconds;
+            updateTimerDisplay();
+            document.getElementById('startTimerText').innerText = 'Iniciar sesión';
+            document.getElementById('startTimerIcon').className = 'fa-solid fa-play text-xs';
+        }
+
+        function playChime() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } catch (e) {
+                // Audio fallback
+            }
+        }
+
+        // --- 5. TASKS MODAL LOGIC ---
+        function renderTasks() {
+            const container = document.getElementById('taskListContainer');
+            container.innerHTML = '';
+
+            tasks.forEach(task => {
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-3 rounded-xl border transition-all ${
+                    task.completed ? 'bg-slate-50 border-slate-200/60 opacity-60' : 'bg-white border-slate-200'
+                }`;
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})" class="w-4 h-4 rounded text-brand-purple focus:ring-brand-purple cursor-pointer">
+                        <span class="text-sm font-semibold ${task.completed ? 'line-through text-slate-400' : 'text-slate-800'}">${task.title}</span>
+                    </div>
+                    <button onclick="deleteTask(${task.id})" class="text-slate-300 hover:text-rose-500 text-xs p-1">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function toggleTask(id) {
+            tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+            renderTasks();
+            updateTaskBadges();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            renderTasks();
+            updateTaskBadges();
+        }
+
+        function addNewTask() {
+            const input = document.getElementById('newTaskInput');
+            const val = input.value.trim();
+            if (val) {
+                tasks.push({ id: Date.now(), title: val, completed: false });
+                input.value = '';
+                renderTasks();
+                updateTaskBadges();
+                showToast('Nueva tarea añadida');
+            }
+        }
+
+        function updateTaskBadges() {
+            const completedCount = tasks.filter(t => t.completed).length;
+            const pendingCount = tasks.filter(t => !t.completed).length;
+
+            document.getElementById('completedTasksCount').innerText = completedCount;
+            document.getElementById('pendingTasksBadge').innerText = `${pendingCount} pendientes hoy`;
+            document.getElementById('navTaskBadge').innerText = pendingCount;
+        }
+
+        // --- 6. LOG HOURS MODAL LOGIC ---
+        function openLogHoursModal() {
+            document.getElementById('logHoursModal').classList.remove('hidden');
+        }
+        function closeLogHoursModal() {
+            document.getElementById('logHoursModal').classList.add('hidden');
+        }
+        function submitLoggedHours() {
+            const dayIndex = parseInt(document.getElementById('logDaySelect').value);
+            const hours = parseFloat(document.getElementById('logHoursInput').value);
+
+            if (!isNaN(hours) && hours > 0) {
+                studyData.week[dayIndex] += hours;
+                if (studyChartInstance) studyChartInstance.update();
+
+                // Recalculate total
+                const total = studyData.week.reduce((a, b) => a + b, 0).toFixed(1);
+                document.getElementById('totalHoursText').innerText = `${total}h`;
+
+                closeLogHoursModal();
+                showToast(`Registradas +${hours}h exitosamente`);
+            }
+        }
+
+        // --- 7. MODAL TOGGLES ---
+        function openTasksModal() {
+            document.getElementById('tasksModal').classList.remove('hidden');
+        }
+        function closeTasksModal() {
+            document.getElementById('tasksModal').classList.add('hidden');
+        }
+
+        function openRankingModal() {
+            document.getElementById('rankingModal').classList.remove('hidden');
+        }
+        function closeRankingModal() {
+            document.getElementById('rankingModal').classList.add('hidden');
+        }
+
+        function openMethodsModal() {
+            showToast('Explorando todos los Métodos de Estudio de InBalance');
+        }
+
+        function openMethodDetails(title, progress, sessions, streak) {
+            showToast(`${title}: ${progress}% completado (${sessions}, Racha: ${streak})`);
+        }
+
+        // --- 8. TOAST NOTIFICATION UTILITY ---
+        let toastTimeout = null;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            
+            toastMsg.innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
