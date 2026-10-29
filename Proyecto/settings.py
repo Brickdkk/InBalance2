@@ -75,8 +75,12 @@ WSGI_APPLICATION = "Proyecto.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "InBalance",
+        "USER": "ADMIN",
+        "PASSWORD": "InBalance",
+        "HOST": "ec2-54-90-194-234.compute-1.amazonaws.com",
+        "PORT": "3306",
     }
 }
 
