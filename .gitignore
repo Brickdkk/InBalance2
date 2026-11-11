@@ -1,8 +1,32 @@
-.DS_Store
-**/.DS_Store
+# Python Bytecode & Cache
 __pycache__/
 *.py[cod]
-db.sqlite3
+*$py.class
+
+# Operating System Files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Virtual Environments
 mientorno/
 venv/
 .venv/
+env/
+
+# Databases & Backups
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+*.json
+aws_backup.json
+
+# Local / Offline Settings & Secrets
+Proyecto/local_settings.py
+local_settings.py
+.env
+
+# Static & Media root (if generated locally)
+/static_collected/
+/media/
