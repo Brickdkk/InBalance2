@@ -13,20 +13,3 @@ Desktop.ini
 mientorno/
 venv/
 .venv/
-env/
-
-# Databases & Backups
-db.sqlite3
-db.sqlite3-journal
-*.sqlite3
-*.json
-aws_backup.json
-
-# Local / Offline Settings & Secrets
-Proyecto/local_settings.py
-local_settings.py
-.env
-
-# Static & Media root (if generated locally)
-/static_collected/
-/media/

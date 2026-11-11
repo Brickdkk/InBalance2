@@ -20,10 +20,10 @@
   </head>
   <body>
 
-    <!-- Navbar Original -->
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
       <div class="container-fluid">
-        <a class="navbar-brand fw-bold text-primary" href="#">InBalance</a>
+        <a class="navbar-brand fw-bold text-primary" href="{% url 'index' %}">InBalance</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -31,7 +31,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">Inicio</a>
+              <a class="nav-link active" aria-current="page" href="{% url 'index' %}">Inicio</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#">Pomodoro</a>
@@ -42,7 +42,12 @@
               </a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="{% url 'user_view' %}">Perfil</a></li>
-                <li><a class="dropdown-item" href="{% url 'admin_view' %}">Administrador</a></li>
+
+                <!-- Visibilidad exclusiva para Administradores -->
+                {% if user.is_authenticated and user.is_staff %}
+                  <li><a class="dropdown-item text-danger fw-semibold" href="{% url 'admin_view' %}"><i class="bi bi-shield-lock me-1"></i>Administrador</a></li>
+                {% endif %}
+
                 <li><a class="dropdown-item" href="#">Recursos</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="#">Configuración</a></li>
@@ -61,16 +66,33 @@
             </li>
           </ul>
 
-          <form class="d-flex" role="search">
-            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"/>
-            <button class="btn btn-outline-success" type="submit">Search</button>
-          </form>
+          <div class="d-flex align-items-center gap-2">
+            {% if user.is_authenticated %}
+              <span class="navbar-text small me-2 text-muted">Hola, <strong>{{ user.username }}</strong></span>
+              <form method="post" action="{% url 'logout' %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">Cerrar Sesión</button>
+              </form>
+            {% else %}
+              <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Iniciar Sesión</a>
+            {% endif %}
+          </div>
         </div>
       </div>
     </nav>
 
     <!-- Vista General de Inicio -->
     <div class="container py-4">
+
+      <!-- Mensajes de feedback -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
 
       <!-- Cabecera y Botones Principales a User y Admin -->
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 bg-white p-4 rounded-3 shadow-sm">
@@ -82,15 +104,17 @@
           <a href="{% url 'user_view' %}" class="btn btn-primary px-4">
             <i class="bi bi-person-circle me-2"></i>Perfil Usuario
           </a>
-          <a href="{% url 'admin_view' %}" class="btn btn-outline-dark px-4">
-            <i class="bi bi-shield-lock me-2"></i>Administrador
-          </a>
+          <!-- Botón sólo visible si es Administrador -->
+          {% if user.is_authenticated and user.is_staff %}
+            <a href="{% url 'admin_view' %}" class="btn btn-outline-dark px-4">
+              <i class="bi bi-shield-lock me-2"></i>Administrador
+            </a>
+          {% endif %}
         </div>
       </div>
 
-      <!-- Tarjetas de Data General (Los 5 puntos resumidos) -->
+      <!-- Tarjetas de Data General -->
       <div class="row g-3 mb-4">
-        <!-- Hábitos y consecuencias -->
         <div class="col-md-3">
           <div class="card p-3 h-100">
             <span class="text-muted small">Hábitos y Consecuencias</span>
@@ -99,7 +123,6 @@
           </div>
         </div>
 
-        <!-- Método Pomodoro -->
         <div class="col-md-3">
           <div class="card p-3 h-100">
             <span class="text-muted small">Sesiones Pomodoro</span>
@@ -108,7 +131,6 @@
           </div>
         </div>
 
-        <!-- Recordatorios -->
         <div class="col-md-3">
           <div class="card p-3 h-100">
             <span class="text-muted small">Recordatorios Activos</span>
@@ -117,7 +139,6 @@
           </div>
         </div>
 
-        <!-- Checklist y Rewards -->
         <div class="col-md-3">
           <div class="card p-3 h-100">
             <span class="text-muted small">Checklist & Rewards</span>
@@ -127,9 +148,8 @@
         </div>
       </div>
 
-      <!-- Resumen Inferior: Horario del Día y Alertas Rápidas -->
+      <!-- Resumen Inferior: Horario del Día y Alertas -->
       <div class="row g-4">
-        <!-- Horario del Día -->
         <div class="col-md-7">
           <div class="card p-4 h-100">
             <h6 class="fw-bold mb-3"><i class="bi bi-calendar-event text-primary me-2"></i>Horario de Hoy</h6>
@@ -153,7 +173,6 @@
           </div>
         </div>
 
-        <!-- Próximos Recordatorios para evitar el atraso -->
         <div class="col-md-5">
           <div class="card p-4 h-100">
             <h6 class="fw-bold mb-3"><i class="bi bi-bell text-warning me-2"></i>Próximos Recordatorios</h6>
@@ -171,7 +190,6 @@
 
     </div>
 
-    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
   </body>
 </html>

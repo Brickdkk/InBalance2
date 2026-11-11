@@ -7,7 +7,6 @@
     <title>InBalance - Panel de Administración</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       body {
@@ -18,6 +17,13 @@
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
       }
+      .clickable-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+      }
+      .clickable-row:hover {
+        background-color: #f1f5f9 !important;
+      }
     </style>
   </head>
   <body>
@@ -25,21 +31,21 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
       <div class="container-fluid">
-        <a class="navbar-brand fw-bold text-primary" href="/">InBalance</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <a class="navbar-brand fw-bold text-primary" href="{% url 'index' %}">InBalance</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a class="nav-link" href="/">Inicio</a>
+              <a class="nav-link" href="{% url 'index' %}">Inicio</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#">Pomodoro</a>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
                 Usuario
               </a>
               <ul class="dropdown-menu">
@@ -50,23 +56,15 @@
                 <li><a class="dropdown-item" href="#">Configuración</a></li>
               </ul>
             </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Calendarizacion
-              </a>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Semanal</a></li>
-                <li><a class="dropdown-item" href="#">Mensual</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Administrar</a></li>
-              </ul>
-            </li>
           </ul>
 
-          <form class="d-flex" role="search">
-            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"/>
-            <button class="btn btn-outline-success" type="submit">Search</button>
-          </form>
+          <div class="d-flex align-items-center gap-2">
+            <span class="navbar-text small me-2 text-muted">Admin: <strong>{{ user.username }}</strong></span>
+            <form method="post" action="{% url 'logout' %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger btn-sm">Cerrar Sesión</button>
+            </form>
+          </div>
         </div>
       </div>
     </nav>
@@ -74,15 +72,25 @@
     <!-- Panel de Administrador -->
     <div class="container py-4">
 
-      <!-- Cabecera y Navegación Rápida -->
+      <!-- Alertas -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Cabecera -->
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 bg-white p-4 rounded-3 shadow-sm">
         <div>
           <span class="badge bg-dark mb-1">Modo Administrador</span>
           <h3 class="fw-bold mb-1">Panel de Control del Sistema</h3>
-          <p class="text-muted mb-0">Gestión de usuarios, monitoreo de hábitos y configuración de recompensas.</p>
+          <p class="text-muted mb-0">Gestión interactiva conectada a la Base de Datos.</p>
         </div>
         <div class="d-flex gap-2 mt-3 mt-md-0">
-          <a href="/" class="btn btn-outline-secondary px-3">
+          <a href="{% url 'index' %}" class="btn btn-outline-secondary px-3">
             <i class="bi bi-house me-1"></i>Inicio
           </a>
           <a href="{% url 'user_view' %}" class="btn btn-primary px-3">
@@ -91,20 +99,20 @@
         </div>
       </div>
 
-      <!-- Métricas Globales del Sistema -->
+      <!-- Métricas Globales -->
       <div class="row g-3 mb-4">
         <div class="col-md-3">
           <div class="card p-3 h-100">
-            <span class="text-muted small">Usuarios Activos (BD)</span>
-            <h4 class="fw-bold text-dark mt-1 mb-1">{{ total_users|default:"148" }}</h4>
-            <small class="text-success"><i class="bi bi-arrow-up-short"></i> +12% esta semana</small>
+            <span class="text-muted small">Usuarios Registrados</span>
+            <h4 class="fw-bold text-dark mt-1 mb-1">{{ total_users }}</h4>
+            <small class="text-success"><i class="bi bi-check-circle"></i> Sincronizado</small>
           </div>
         </div>
 
         <div class="col-md-3">
           <div class="card p-3 h-100">
             <span class="text-muted small">Riesgo de Atraso Global</span>
-            <h4 class="fw-bold text-warning mt-1 mb-1">{{ high_risk_count|default:"18" }} Usuarios</h4>
+            <h4 class="fw-bold text-warning mt-1 mb-1">{{ risk_high }} Usuarios</h4>
             <small class="text-muted">Con alertas activas</small>
           </div>
         </div>
@@ -112,33 +120,34 @@
         <div class="col-md-3">
           <div class="card p-3 h-100">
             <span class="text-muted small">Pomodoros Completados</span>
-            <h4 class="fw-bold text-danger mt-1 mb-1">1,420</h4>
-            <small class="text-muted">Total acumulado del mes</small>
+            <h4 class="fw-bold text-danger mt-1 mb-1">{{ total_pomodoros }}</h4>
+            <small class="text-muted">Total acumulado</small>
           </div>
         </div>
 
         <div class="col-md-3">
           <div class="card p-3 h-100">
             <span class="text-muted small">Rewards Canjeados</span>
-            <h4 class="fw-bold text-primary mt-1 mb-1">315</h4>
-            <small class="text-muted">Promedio 85% checklist</small>
+            <h4 class="fw-bold text-primary mt-1 mb-1">{{ total_rewards }}</h4>
+            <small class="text-muted">Total canjes acumulados</small>
           </div>
         </div>
       </div>
 
-      <!-- SECCIÓN DE 4 GRÁFICOS ANALÍTICOS -->
+      <!-- Gráficos -->
       <div class="row g-4 mb-4">
-        <!-- Gráfico 1: Crecimiento de Usuarios en la BD -->
         <div class="col-lg-6">
           <div class="card p-4 h-100">
-            <h6 class="fw-bold mb-3"><i class="bi bi-graph-up text-primary me-2"></i>Crecimiento de Usuarios en la Base de Datos</h6>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i>Crecimiento de Usuarios</h6>
+              <span class="badge bg-primary-subtle text-primary small">Haz clic en un mes</span>
+            </div>
             <div style="height: 250px; position: relative;">
-              <canvas id="usersGrowthChart"></canvas>
+              <canvas id="usersGrowthChart" style="cursor: pointer;"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- Gráfico 2: Distribución de Riesgo de Atraso -->
         <div class="col-lg-6">
           <div class="card p-4 h-100">
             <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart text-warning me-2"></i>Distribución de Riesgo de Atraso</h6>
@@ -148,7 +157,6 @@
           </div>
         </div>
 
-        <!-- Gráfico 3: Pomodoros por Día -->
         <div class="col-lg-6">
           <div class="card p-4 h-100">
             <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-fill text-danger me-2"></i>Pomodoros Completados (Últimos 7 Días)</h6>
@@ -158,7 +166,6 @@
           </div>
         </div>
 
-        <!-- Gráfico 4: Recompensas Canjeadas -->
         <div class="col-lg-6">
           <div class="card p-4 h-100">
             <h6 class="fw-bold mb-3"><i class="bi bi-trophy-fill text-success me-2"></i>Recompensas Más Canjeadas</h6>
@@ -169,15 +176,16 @@
         </div>
       </div>
 
-      <!-- Gestión de Usuarios y Configuración de Parámetros -->
+      <!-- Tabla de Monitoreo -->
       <div class="row g-4">
-        
-        <!-- Tabla de Monitoreo de Usuarios -->
-        <div class="col-lg-8">
-          <div class="card p-4 h-100">
+        <div class="col-12">
+          <div class="card p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h6 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Monitoreo de Estudiantes</h6>
-              <button class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i>Exportar Reporte</button>
+              <div>
+                <h6 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Gestión de Usuarios en Base de Datos</h6>
+                <small class="text-muted">Haz clic sobre cualquier usuario para inspeccionar sus estadísticas en vivo.</small>
+              </div>
+              <span class="badge bg-secondary-subtle text-secondary">{{ users|length }} cuenta(s)</span>
             </div>
             
             <div class="table-responsive">
@@ -185,127 +193,236 @@
                 <thead class="table-light">
                   <tr>
                     <th>Usuario</th>
-                    <th>Hábitos</th>
-                    <th>Riesgo Atraso</th>
-                    <th>XP</th>
-                    <th>Acción</th>
+                    <th>Rol</th>
+                    <th>Riesgo</th>
+                    <th>Registro</th>
+                    <th class="text-center">Acción</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
+                  {% for u in users %}
+                  <tr class="clickable-row" onclick="inspectUser({{ u.id }})">
                     <td>
-                      <div class="fw-semibold">Camila Rojas</div>
-                      <small class="text-muted">c.rojas@alumnos.cl</small>
+                      <div class="fw-semibold text-primary"><i class="bi bi-person me-1"></i>{{ u.username }}</div>
+                      <small class="text-muted">{{ u.email|default:"Sin correo electrónico" }}</small>
                     </td>
-                    <td>85%</td>
-                    <td><span class="badge bg-success-subtle text-success">Bajo</span></td>
-                    <td>340 XP</td>
                     <td>
-                      <button class="btn btn-sm btn-light border" title="Enviar recordatorio"><i class="bi bi-bell"></i></button>
+                      {% if u.is_superuser %}
+                        <span class="badge bg-danger">Superadmin</span>
+                      {% elif u.is_staff %}
+                        <span class="badge bg-warning text-dark">Staff Admin</span>
+                      {% else %}
+                        <span class="badge bg-success-subtle text-success">Estudiante</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if u.profile.risk_level == 'high' %}
+                        <span class="badge bg-danger-subtle text-danger">Alto</span>
+                      {% elif u.profile.risk_level == 'medium' %}
+                        <span class="badge bg-warning-subtle text-warning">Medio</span>
+                      {% else %}
+                        <span class="badge bg-success-subtle text-success">Bajo</span>
+                      {% endif %}
+                    </td>
+                    <td><small class="text-muted">{{ u.date_joined|date:"d/m/Y H:i" }}</small></td>
+                    <td class="text-center" onclick="event.stopPropagation();">
+                      {% if u == request.user %}
+                        <span class="badge bg-light text-muted border">Sesión actual</span>
+                      {% else %}
+                        <form method="POST" action="{% url 'delete_user' u.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar definitivamente a {{ u.username }} de la base de datos?');" class="d-inline">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar usuario">
+                            <i class="bi bi-trash"></i> Eliminar
+                          </button>
+                        </form>
+                      {% endif %}
                     </td>
                   </tr>
+                  {% empty %}
                   <tr>
-                    <td>
-                      <div class="fw-semibold">Matías Soto</div>
-                      <small class="text-muted">m.soto@alumnos.cl</small>
-                    </td>
-                    <td>40%</td>
-                    <td><span class="badge bg-danger-subtle text-danger">Alto</span></td>
-                    <td>60 XP</td>
-                    <td>
-                      <button class="btn btn-sm btn-light border" title="Enviar recordatorio"><i class="bi bi-bell"></i></button>
-                    </td>
+                    <td colspan="5" class="text-center py-4 text-muted">No se encontraron usuarios en la base de datos.</td>
                   </tr>
-                  <tr>
-                    <td>
-                      <div class="fw-semibold">Valentina Díaz</div>
-                      <small class="text-muted">v.diaz@alumnos.cl</small>
-                    </td>
-                    <td>65%</td>
-                    <td><span class="badge bg-warning-subtle text-warning">Medio</span></td>
-                    <td>190 XP</td>
-                    <td>
-                      <button class="btn btn-sm btn-light border" title="Enviar recordatorio"><i class="bi bi-bell"></i></button>
-                    </td>
-                  </tr>
+                  {% endfor %}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
-
-        <!-- Configuración de Rewards y Alertas Globales -->
-        <div class="col-lg-4">
-          <div class="card p-4 h-100">
-            <h6 class="fw-bold mb-3"><i class="bi bi-sliders text-dark me-2"></i>Parámetros del Sistema</h6>
-
-            <div class="mb-3">
-              <label class="form-label small fw-semibold">XP por Tarea en Checklist</label>
-              <input type="number" class="form-control form-control-sm" value="25">
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label small fw-semibold">Tiempo Pomodoro por defecto (min)</label>
-              <input type="number" class="form-control form-control-sm" value="25">
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label small fw-semibold">Enviar Recordatorio Global</label>
-              <input type="text" class="form-control form-control-sm mb-2" placeholder="Mensaje para todos los usuarios...">
-              <button class="btn btn-sm btn-warning w-100">
-                <i class="bi bi-megaphone me-1"></i>Enviar Alerta Anti-Atraso
-              </button>
-            </div>
-
-            <hr class="my-2">
-
-            <button class="btn btn-sm btn-dark w-100 mt-auto">Guardar Cambios</button>
-          </div>
-        </div>
-
       </div>
 
     </div>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <!-- MODAL 1: Estadísticas Detalladas del Usuario -->
+    <div class="modal fade" id="userStatsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title fw-bold" id="mUserName">Detalles del Usuario</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <div>
+                <span id="mUserEmail" class="text-muted small"></span>
+                <div id="mUserRole" class="mt-1"></div>
+              </div>
+              <div id="mUserRisk"></div>
+            </div>
 
-    <!-- Inicialización de Chart.js para los 4 gráficos -->
+            <!-- Métricas Clave -->
+            <div class="row g-2 mb-4 text-center">
+              <div class="col-4">
+                <div class="bg-light p-2 rounded-3 border">
+                  <span class="text-muted d-block small">Puntos XP</span>
+                  <h5 class="fw-bold mb-0 text-primary" id="mUserXP">0</h5>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="bg-light p-2 rounded-3 border">
+                  <span class="text-muted d-block small">Pomodoros</span>
+                  <h5 class="fw-bold mb-0 text-danger" id="mUserPomos">0</h5>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="bg-light p-2 rounded-3 border">
+                  <span class="text-muted d-block small">Dedicación</span>
+                  <h5 class="fw-bold mb-0 text-success" id="mUserHours">0h</h5>
+                </div>
+              </div>
+            </div>
+
+            <h6 class="fw-bold mb-2 small text-uppercase text-muted">Últimas Sesiones Registradas</h6>
+            <ul class="list-group list-group-flush border rounded-3 mb-3 small" id="mUserSessions">
+              <li class="list-group-item text-muted text-center py-3">Sin sesiones registradas</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: Desglose Analítico por Mes -->
+    <div class="modal fade" id="monthDetailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title fw-bold" id="mMonthTitle">Actividad del Mes</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <p class="text-muted small mb-4">Total de acciones y eventos registrados en la base de datos durante este período.</p>
+            
+            <div class="row g-3 mb-4 text-center">
+              <div class="col-md-4">
+                <div class="card p-3 bg-light border">
+                  <span class="text-muted small">Nuevos Usuarios</span>
+                  <h3 class="fw-bold text-primary mb-0 mt-1" id="mNewUsers">0</h3>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card p-3 bg-light border">
+                  <span class="text-muted small">Pomodoros Completados</span>
+                  <h3 class="fw-bold text-danger mb-0 mt-1" id="mMonthPomos">0</h3>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card p-3 bg-light border">
+                  <span class="text-muted small">Recompensas Canjeadas</span>
+                  <h3 class="fw-bold text-success mb-0 mt-1" id="mMonthRewards">0</h3>
+                </div>
+              </div>
+            </div>
+
+            <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart me-1"></i>Distribución de Recompensas de este Mes</h6>
+            <div style="height: 220px; position: relative;">
+              <canvas id="monthRewardBreakdownChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenedor oculto con datos de la base de datos pasados a JS -->
+    <div id="chart-data" 
+         data-growth-labels='{{ growth_labels_json|safe }}'
+         data-growth-counts='{{ growth_data_json|safe }}'
+         data-month-tokens='{{ month_tokens_json|safe }}'
+         data-risk-low='{{ risk_low }}'
+         data-risk-med='{{ risk_med }}'
+         data-risk-high='{{ risk_high }}'
+         data-pomos='{{ pomos_data_json|safe }}'
+         data-rewards='{{ rewards_data_json|safe }}'
+         class="d-none">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // 1. Gráfico de Crecimiento de Usuarios (Línea)
+        const chartElement = document.getElementById('chart-data');
+        const growthLabels = JSON.parse(chartElement.dataset.growthLabels || '[]');
+        const growthCounts = JSON.parse(chartElement.dataset.growthCounts || '[]');
+        const monthTokens = JSON.parse(chartElement.dataset.monthTokens || '[]');
+        const riskLow = parseInt(chartElement.dataset.riskLow, 10) || 0;
+        const riskMed = parseInt(chartElement.dataset.riskMed, 10) || 0;
+        const riskHigh = parseInt(chartElement.dataset.riskHigh, 10) || 0;
+        const pomoDays = JSON.parse(chartElement.dataset.pomos || '[]');
+        const rewardsData = JSON.parse(chartElement.dataset.rewards || '[]');
+
+        const userModal = new bootstrap.Modal(document.getElementById('userStatsModal'));
+        const monthModal = new bootstrap.Modal(document.getElementById('monthDetailModal'));
+        let monthChartInstance = null;
+
+        // 1. Crecimiento de Usuarios (Con evento de clic por cada mes)
         const ctxUsers = document.getElementById('usersGrowthChart').getContext('2d');
-        new Chart(ctxUsers, {
+        const usersGrowthChart = new Chart(ctxUsers, {
             type: 'line',
             data: {
-                labels: ['Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+                labels: growthLabels,
                 datasets: [{
                     label: 'Usuarios Registrados en BD',
-                    data: [85, 98, 115, 130, 142, {{ total_users|default:"148" }}],
+                    data: growthCounts,
                     borderColor: '#0d6efd',
                     backgroundColor: 'rgba(13, 110, 253, 0.1)',
                     borderWidth: 3,
                     fill: true,
-                    tension: 0.3
+                    tension: 0.25,
+                    pointRadius: 6,
+                    pointHoverRadius: 9,
+                    pointBackgroundColor: '#0d6efd'
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
+                },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const label = growthLabels[index];
+                        const token = monthTokens[index];
+                        openMonthDrilldown(token, label);
+                    }
+                }
+            }
         });
 
-        // 2. Gráfico de Distribución de Riesgo (Dona)
+        // 2. Distribución de Riesgo
         const ctxRisk = document.getElementById('riskDistributionChart').getContext('2d');
+        const totalRisk = riskLow + riskMed + riskHigh;
         new Chart(ctxRisk, {
             type: 'doughnut',
             data: {
                 labels: ['Bajo Riesgo', 'Riesgo Medio', 'Alto Riesgo'],
                 datasets: [{
-                    data: [110, 20, {{ high_risk_count|default:"18" }}],
+                    data: totalRisk > 0 ? [riskLow, riskMed, riskHigh] : [1, 0, 0],
                     backgroundColor: ['#198754', '#ffc107', '#dc3545']
                 }]
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // 3. Gráfico de Pomodoros Diarios (Barras)
+        // 3. Pomodoros Diarios
         const ctxPomo = document.getElementById('pomodoroChart').getContext('2d');
         new Chart(ctxPomo, {
             type: 'bar',
@@ -313,15 +430,21 @@
                 labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
                 datasets: [{
                     label: 'Pomodoros Globales',
-                    data: [180, 210, 195, 230, 250, 140, 115],
+                    data: pomoDays,
                     backgroundColor: '#dc3545',
                     borderRadius: 6
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
+                }
+            }
         });
 
-        // 4. Gráfico de Recompensas Canjeadas (Barras Horizontales o Verticales)
+        // 4. Recompensas Canjeadas
         const ctxRewards = document.getElementById('rewardsChart').getContext('2d');
         new Chart(ctxRewards, {
             type: 'bar',
@@ -329,13 +452,94 @@
                 labels: ['Pausas Activas', 'Descarga de Apuntes', 'Puntos Extra', 'Horario Libre'],
                 datasets: [{
                     label: 'Canjes Totales',
-                    data: [120, 95, 65, 35],
+                    data: rewardsData,
                     backgroundColor: '#198754',
                     borderRadius: 6
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
+                }
+            }
         });
+
+        // FUNCIÓN 1: Consulta estadística al hacer clic en un Usuario
+        function inspectUser(userId) {
+            fetch(`/api/user-stats/${userId}/`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('mUserName').innerText = data.username;
+                    document.getElementById('mUserEmail').innerText = data.email;
+                    document.getElementById('mUserRole').innerHTML = `<span class="badge bg-secondary">${data.role}</span>`;
+                    
+                    const riskBadge = data.risk_level === 'high' 
+                        ? '<span class="badge bg-danger">Alto Riesgo</span>' 
+                        : (data.risk_level === 'medium' ? '<span class="badge bg-warning text-dark">Riesgo Medio</span>' : '<span class="badge bg-success">Bajo Riesgo</span>');
+                    document.getElementById('mUserRisk').innerHTML = riskBadge;
+
+                    document.getElementById('mUserXP').innerText = `${data.xp} XP`;
+                    document.getElementById('mUserPomos').innerText = data.total_pomos;
+                    document.getElementById('mUserHours').innerText = `${data.study_hours}h`;
+
+                    const sessionsList = document.getElementById('mUserSessions');
+                    if (data.recent_sessions.length > 0) {
+                        sessionsList.innerHTML = data.recent_sessions.map(s => `
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-clock me-2 text-primary"></i>${s.date}</span>
+                                <span class="badge bg-danger-subtle text-danger">${s.duration} min</span>
+                            </li>
+                        `).join('');
+                    } else {
+                        sessionsList.innerHTML = '<li class="list-group-item text-muted text-center py-3">Sin sesiones registradas en la base de datos</li>';
+                    }
+
+                    userModal.show();
+                })
+                .catch(err => console.error('Error fetching user stats:', err));
+        }
+
+        // FUNCIÓN 2: Consulta de desglose al hacer clic en un Mes del Gráfico
+        function openMonthDrilldown(token, label) {
+            fetch(`/api/month-activity/?token=${token}&label=${label}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('mMonthTitle').innerText = `Actividad Registrada: ${data.month_label}`;
+                    document.getElementById('mNewUsers').innerText = data.new_users;
+                    document.getElementById('mMonthPomos').innerText = data.total_pomos;
+                    document.getElementById('mMonthRewards').innerText = data.total_rewards;
+
+                    // Renderizar o actualizar gráfico de desglose mensual
+                    const ctxModal = document.getElementById('monthRewardBreakdownChart').getContext('2d');
+                    if (monthChartInstance) {
+                        monthChartInstance.destroy();
+                    }
+                    monthChartInstance = new Chart(ctxModal, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Pausas Activas', 'Descarga de Apuntes', 'Puntos Extra', 'Horario Libre'],
+                            datasets: [{
+                                label: 'Canjes en este Mes',
+                                data: data.reward_breakdown,
+                                backgroundColor: ['#0d6efd', '#20c997', '#ffc107', '#6f42c1'],
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
+                            }
+                        }
+                    });
+
+                    monthModal.show();
+                })
+                .catch(err => console.error('Error fetching month drilldown:', err));
+        }
     </script>
   </body>
 </html>
