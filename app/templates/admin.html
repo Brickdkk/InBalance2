@@ -24,6 +24,14 @@
       .clickable-row:hover {
         background-color: #f1f5f9 !important;
       }
+      .interactive-canvas {
+        cursor: pointer;
+      }
+      /* Nivel 3: Modal anidado sobre un modal ya abierto */
+      .modal-level-3 {
+        z-index: 1065 !important;
+        background-color: rgba(15, 23, 42, 0.55);
+      }
     </style>
   </head>
   <body>
@@ -87,7 +95,7 @@
         <div>
           <span class="badge bg-dark mb-1">Modo Administrador</span>
           <h3 class="fw-bold mb-1">Panel de Control del Sistema</h3>
-          <p class="text-muted mb-0">Gestión interactiva conectada a la Base de Datos.</p>
+          <p class="text-muted mb-0">Haz clic en los gráficos para explorar sub-niveles de datos o administra cuentas en la tabla inferior.</p>
         </div>
         <div class="d-flex gap-2 mt-3 mt-md-0">
           <a href="{% url 'index' %}" class="btn btn-outline-secondary px-3">
@@ -134,41 +142,51 @@
         </div>
       </div>
 
-      <!-- Gráficos -->
+      <!-- Gráficos Principales (Nivel 1) -->
       <div class="row g-4 mb-4">
+        <!-- Gráfico 1: Crecimiento (Lleva a Nivel 2 -> Nivel 3) -->
         <div class="col-lg-6">
           <div class="card p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h6 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i>Crecimiento de Usuarios</h6>
-              <span class="badge bg-primary-subtle text-primary small">Haz clic en un mes</span>
+              <span class="badge bg-primary-subtle text-primary small"><i class="bi bi-layers me-1"></i>3 Niveles (Clic en mes)</span>
             </div>
             <div style="height: 250px; position: relative;">
-              <canvas id="usersGrowthChart" style="cursor: pointer;"></canvas>
+              <canvas id="usersGrowthChart" class="interactive-canvas"></canvas>
             </div>
           </div>
         </div>
 
+        <!-- Gráfico 2: Riesgo (Lleva a Nivel 2) -->
         <div class="col-lg-6">
           <div class="card p-4 h-100">
-            <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart text-warning me-2"></i>Distribución de Riesgo de Atraso</h6>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0"><i class="bi bi-pie-chart text-warning me-2"></i>Distribución de Riesgo de Atraso</h6>
+              <span class="badge bg-warning-subtle text-warning-emphasis small">Clic en sector</span>
+            </div>
             <div style="height: 250px; position: relative;">
-              <canvas id="riskDistributionChart"></canvas>
+              <canvas id="riskDistributionChart" class="interactive-canvas"></canvas>
             </div>
           </div>
         </div>
 
+        <!-- Gráfico 3: Pomodoros 7 Días (Lleva a Nivel 2) -->
         <div class="col-lg-6">
           <div class="card p-4 h-100">
-            <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-fill text-danger me-2"></i>Pomodoros Completados (Últimos 7 Días)</h6>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill text-danger me-2"></i>Pomodoros Completados (Últimos 7 Días)</h6>
+              <span class="badge bg-danger-subtle text-danger small">Clic en día</span>
+            </div>
             <div style="height: 250px; position: relative;">
-              <canvas id="pomodoroChart"></canvas>
+              <canvas id="pomodoroChart" class="interactive-canvas"></canvas>
             </div>
           </div>
         </div>
 
+        <!-- Gráfico 4: Recompensas Globales -->
         <div class="col-lg-6">
           <div class="card p-4 h-100">
-            <h6 class="fw-bold mb-3"><i class="bi bi-trophy-fill text-success me-2"></i>Recompensas Más Canjeadas</h6>
+            <h6 class="fw-bold mb-2"><i class="bi bi-trophy-fill text-success me-2"></i>Recompensas Más Canjeadas</h6>
             <div style="height: 250px; position: relative;">
               <canvas id="rewardsChart"></canvas>
             </div>
@@ -176,16 +194,21 @@
         </div>
       </div>
 
-      <!-- Tabla de Monitoreo -->
+      <!-- Mantenedor de Usuarios (CRUD Completo) -->
       <div class="row g-4">
         <div class="col-12">
           <div class="card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
               <div>
-                <h6 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Gestión de Usuarios en Base de Datos</h6>
-                <small class="text-muted">Haz clic sobre cualquier usuario para inspeccionar sus estadísticas en vivo.</small>
+                <h6 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Mantenedor de Usuarios en Base de Datos</h6>
+                <small class="text-muted">Haz clic en una fila para ver estadísticas o usa los botones para crear, editar o eliminar cuentas.</small>
               </div>
-              <span class="badge bg-secondary-subtle text-secondary">{{ users|length }} cuenta(s)</span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary-subtle text-secondary">{{ users|length }} cuenta(s)</span>
+                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                  <i class="bi bi-person-plus-fill me-1"></i>Nuevo Usuario
+                </button>
+              </div>
             </div>
             
             <div class="table-responsive">
@@ -195,8 +218,9 @@
                     <th>Usuario</th>
                     <th>Rol</th>
                     <th>Riesgo</th>
+                    <th>XP</th>
                     <th>Registro</th>
-                    <th class="text-center">Acción</th>
+                    <th class="text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -224,23 +248,41 @@
                         <span class="badge bg-success-subtle text-success">Bajo</span>
                       {% endif %}
                     </td>
+                    <td><span class="fw-semibold text-dark">{{ u.profile.xp|default:0 }}</span> <small class="text-muted">XP</small></td>
                     <td><small class="text-muted">{{ u.date_joined|date:"d/m/Y H:i" }}</small></td>
                     <td class="text-center" onclick="event.stopPropagation();">
-                      {% if u == request.user %}
-                        <span class="badge bg-light text-muted border">Sesión actual</span>
-                      {% else %}
-                        <form method="POST" action="{% url 'delete_user' u.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar definitivamente a {{ u.username }} de la base de datos?');" class="d-inline">
-                          {% csrf_token %}
-                          <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar usuario">
-                            <i class="bi bi-trash"></i> Eliminar
-                          </button>
-                        </form>
-                      {% endif %}
+                      <div class="d-inline-flex gap-1">
+                        <!-- Botón Editar -->
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                title="Modificar usuario"
+                                data-id="{{ u.id }}"
+                                data-username="{{ u.username }}"
+                                data-email="{{ u.email }}"
+                                data-role="{% if u.is_superuser %}superuser{% elif u.is_staff %}staff{% else %}student{% endif %}"
+                                data-risk="{{ u.profile.risk_level|default:'low' }}"
+                                data-xp="{{ u.profile.xp|default:0 }}"
+                                onclick="openEditUserModal(this)">
+                          <i class="bi bi-pencil-square"></i> Editar
+                        </button>
+
+                        <!-- Botón Eliminar -->
+                        {% if u == request.user %}
+                          <span class="badge bg-light text-muted border d-flex align-items-center px-2">Sesión actual</span>
+                        {% else %}
+                          <form method="POST" action="{% url 'delete_user' u.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar definitivamente a {{ u.username }} de la base de datos?');" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar usuario">
+                              <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                          </form>
+                        {% endif %}
+                      </div>
                     </td>
                   </tr>
                   {% empty %}
                   <tr>
-                    <td colspan="5" class="text-center py-4 text-muted">No se encontraron usuarios en la base de datos.</td>
+                    <td colspan="6" class="text-center py-4 text-muted">No se encontraron usuarios en la base de datos.</td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -252,7 +294,117 @@
 
     </div>
 
-    <!-- MODAL 1: Estadísticas Detalladas del Usuario -->
+    <!-- MODAL CREAR USUARIO (CREATE) -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Crear Nueva Cuenta</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <form method="POST" action="{% url 'create_user' %}">
+            {% csrf_token %}
+            <div class="modal-body p-4">
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Nombre de Usuario *</label>
+                <input type="text" name="username" class="form-control" placeholder="ej. ana_martinez" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Correo Electrónico</label>
+                <input type="email" name="email" class="form-control" placeholder="ej. ana@alumnos.cl">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Contraseña *</label>
+                <input type="password" name="password" class="form-control" placeholder="Mínimo 4 caracteres" required>
+              </div>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Rol</label>
+                  <select name="role" class="form-select">
+                    <option value="student" selected>Estudiante</option>
+                    <option value="staff">Staff Admin</option>
+                    <option value="superuser">Superadmin</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Nivel de Riesgo</label>
+                  <select name="risk_level" class="form-select">
+                    <option value="low" selected>Bajo</option>
+                    <option value="medium">Medio</option>
+                    <option value="high">Alto</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Puntos XP</label>
+                  <input type="number" name="xp" class="form-control" value="0" min="0">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer bg-light">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i>Crear Cuenta</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL EDITAR USUARIO (UPDATE) -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Modificar Cuenta</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <form method="POST" id="editUserForm" action="">
+            {% csrf_token %}
+            <div class="modal-body p-4">
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Nombre de Usuario *</label>
+                <input type="text" name="username" id="editUsername" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Correo Electrónico</label>
+                <input type="email" name="email" id="editEmail" class="form-control">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold small">Nueva Contraseña <span class="text-muted fw-normal">(dejar en blanco para mantener la actual)</span></label>
+                <input type="password" name="password" id="editPassword" class="form-control" placeholder="••••••••">
+              </div>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Rol</label>
+                  <select name="role" id="editRole" class="form-select">
+                    <option value="student">Estudiante</option>
+                    <option value="staff">Staff Admin</option>
+                    <option value="superuser">Superadmin</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Nivel de Riesgo</label>
+                  <select name="risk_level" id="editRisk" class="form-select">
+                    <option value="low">Bajo</option>
+                    <option value="medium">Medio</option>
+                    <option value="high">Alto</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold small">Puntos XP</label>
+                  <input type="number" name="xp" id="editXP" class="form-control" min="0">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer bg-light">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar Cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL USUARIO (INSPECCIÓN INDIVIDUAL) -->
     <div class="modal fade" id="userStatsModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -269,7 +421,6 @@
               <div id="mUserRisk"></div>
             </div>
 
-            <!-- Métricas Clave -->
             <div class="row g-2 mb-4 text-center">
               <div class="col-4">
                 <div class="bg-light p-2 rounded-3 border">
@@ -300,17 +451,18 @@
       </div>
     </div>
 
-    <!-- MODAL 2: Desglose Analítico por Mes -->
+    <!-- MODAL NIVEL 2 (A): Desglose Analítico por Mes -->
     <div class="modal fade" id="monthDetailModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
           <div class="modal-header bg-dark text-white">
-            <h5 class="modal-title fw-bold" id="mMonthTitle">Actividad del Mes</h5>
+            <div>
+              <span class="badge bg-primary mb-1">Nivel 2 · Desglose Mensual</span>
+              <h5 class="modal-title fw-bold" id="mMonthTitle">Actividad del Mes</h5>
+            </div>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body p-4">
-            <p class="text-muted small mb-4">Total de acciones y eventos registrados en la base de datos durante este período.</p>
-            
             <div class="row g-3 mb-4 text-center">
               <div class="col-md-4">
                 <div class="card p-3 bg-light border">
@@ -332,9 +484,99 @@
               </div>
             </div>
 
-            <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart me-1"></i>Distribución de Recompensas de este Mes</h6>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0"><i class="bi bi-bar-chart-steps me-1 text-primary"></i>Recompensas Canjeadas este Mes</h6>
+              <span class="badge bg-info-subtle text-info-emphasis">Haz clic en una barra para Nivel 3</span>
+            </div>
+            <div style="height: 230px; position: relative;">
+              <canvas id="monthRewardBreakdownChart" class="interactive-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL NIVEL 3 (ANIDADO SOBRE NIVEL 2): Usuarios por Recompensa en ese Mes -->
+    <div class="modal fade modal-level-3" id="rewardUsersMonthModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header bg-primary text-white">
+            <div>
+              <span class="badge bg-light text-primary mb-1">Nivel 3 · Sub-Gráfico Anidado</span>
+              <h5 class="modal-title fw-bold" id="mRewardLevel3Title">Detalle de Canjes</h5>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <p class="text-muted small mb-3" id="mRewardLevel3Subtitle">Ranking de estudiantes que canjearon este beneficio en el mes seleccionado.</p>
             <div style="height: 220px; position: relative;">
-              <canvas id="monthRewardBreakdownChart"></canvas>
+              <canvas id="rewardUsersChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL NIVEL 2 (B): Desglose por Grupo de Riesgo -->
+    <div class="modal fade" id="riskDetailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-warning text-dark">
+            <div>
+              <span class="badge bg-dark text-white mb-1">Nivel 2 · Análisis por Riesgo</span>
+              <h5 class="modal-title fw-bold" id="mRiskTitle">Estudiantes por Nivel de Riesgo</h5>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="row g-3 mb-3 text-center">
+              <div class="col-6">
+                <div class="card p-2 bg-light border">
+                  <span class="text-muted small">Estudiantes en este Nivel</span>
+                  <h4 class="fw-bold mb-0" id="mRiskUserCount">0</h4>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="card p-2 bg-light border">
+                  <span class="text-muted small">Promedio XP del Grupo</span>
+                  <h4 class="fw-bold text-primary mb-0" id="mRiskAvgXP">0 XP</h4>
+                </div>
+              </div>
+            </div>
+            <h6 class="fw-bold mb-2">Pomodoros Completados por Estudiante en este Grupo</h6>
+            <div style="height: 240px; position: relative;">
+              <canvas id="riskUsersChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL NIVEL 2 (C): Desglose por Día de la Semana (Duración de bloques) -->
+    <div class="modal fade" id="dayDetailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <div>
+              <span class="badge bg-dark mb-1">Nivel 2 · Desglose Diario</span>
+              <h5 class="modal-title fw-bold" id="mDayTitle">Sesiones del Día</h5>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="d-flex justify-content-around text-center mb-3 bg-light p-2 rounded-3 border">
+              <div>
+                <span class="text-muted small d-block">Sesiones</span>
+                <strong class="fs-5 text-danger" id="mDaySessions">0</strong>
+              </div>
+              <div>
+                <span class="text-muted small d-block">Tiempo Total</span>
+                <strong class="fs-5 text-dark" id="mDayHours">0h</strong>
+              </div>
+            </div>
+            <h6 class="fw-bold mb-2 text-center">Distribución por Duración de Bloque</h6>
+            <div style="height: 220px; position: relative;">
+              <canvas id="dayDurationChart"></canvas>
             </div>
           </div>
         </div>
@@ -369,11 +611,33 @@
 
         const userModal = new bootstrap.Modal(document.getElementById('userStatsModal'));
         const monthModal = new bootstrap.Modal(document.getElementById('monthDetailModal'));
-        let monthChartInstance = null;
+        const rewardLevel3Modal = new bootstrap.Modal(document.getElementById('rewardUsersMonthModal'));
+        const riskModal = new bootstrap.Modal(document.getElementById('riskDetailModal'));
+        const dayModal = new bootstrap.Modal(document.getElementById('dayDetailModal'));
+        const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
 
-        // 1. Crecimiento de Usuarios (Con evento de clic por cada mes)
+        let monthChartInstance = null;
+        let level3ChartInstance = null;
+        let riskChartInstance = null;
+        let dayChartInstance = null;
+        let activeMonthToken = null;
+
+        // Abrir Modal de Edición precargado con datos de la fila
+        function openEditUserModal(btn) {
+            const id = btn.dataset.id;
+            document.getElementById('editUserForm').action = `/admin-dashboard/edit-user/${id}/`;
+            document.getElementById('editUsername').value = btn.dataset.username;
+            document.getElementById('editEmail').value = btn.dataset.email || '';
+            document.getElementById('editPassword').value = '';
+            document.getElementById('editRole').value = btn.dataset.role;
+            document.getElementById('editRisk').value = btn.dataset.risk;
+            document.getElementById('editXP').value = btn.dataset.xp;
+            editUserModal.show();
+        }
+
+        // 1. NIVEL 1 -> NIVEL 2: Crecimiento de Usuarios
         const ctxUsers = document.getElementById('usersGrowthChart').getContext('2d');
-        const usersGrowthChart = new Chart(ctxUsers, {
+        new Chart(ctxUsers, {
             type: 'line',
             data: {
                 labels: growthLabels,
@@ -399,15 +663,13 @@
                 onClick: (e, elements) => {
                     if (elements.length > 0) {
                         const index = elements[0].index;
-                        const label = growthLabels[index];
-                        const token = monthTokens[index];
-                        openMonthDrilldown(token, label);
+                        openMonthDrilldown(monthTokens[index], growthLabels[index]);
                     }
                 }
             }
         });
 
-        // 2. Distribución de Riesgo
+        // 2. NIVEL 1 -> NIVEL 2: Distribución de Riesgo
         const ctxRisk = document.getElementById('riskDistributionChart').getContext('2d');
         const totalRisk = riskLow + riskMed + riskHigh;
         new Chart(ctxRisk, {
@@ -419,10 +681,18 @@
                     backgroundColor: ['#198754', '#ffc107', '#dc3545']
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                onClick: (e, elements) => {
+                    if (elements.length > 0 && totalRisk > 0) {
+                        openRiskDrilldown(elements[0].index);
+                    }
+                }
+            }
         });
 
-        // 3. Pomodoros Diarios
+        // 3. NIVEL 1 -> NIVEL 2: Pomodoros Últimos 7 Días
         const ctxPomo = document.getElementById('pomodoroChart').getContext('2d');
         new Chart(ctxPomo, {
             type: 'bar',
@@ -440,11 +710,16 @@
                 maintainAspectRatio: false,
                 scales: {
                     y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
+                },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        openDayDrilldown(elements[0].index);
+                    }
                 }
             }
         });
 
-        // 4. Recompensas Canjeadas
+        // 4. Recompensas Globales
         const ctxRewards = document.getElementById('rewardsChart').getContext('2d');
         new Chart(ctxRewards, {
             type: 'bar',
@@ -466,7 +741,7 @@
             }
         });
 
-        // FUNCIÓN 1: Consulta estadística al hacer clic en un Usuario
+        // Inspección de Usuario
         function inspectUser(userId) {
             fetch(`/api/user-stats/${userId}/`)
                 .then(res => res.json())
@@ -493,16 +768,16 @@
                             </li>
                         `).join('');
                     } else {
-                        sessionsList.innerHTML = '<li class="list-group-item text-muted text-center py-3">Sin sesiones registradas en la base de datos</li>';
+                        sessionsList.innerHTML = '<li class="list-group-item text-muted text-center py-3">Sin sesiones registradas</li>';
                     }
 
                     userModal.show();
-                })
-                .catch(err => console.error('Error fetching user stats:', err));
+                });
         }
 
-        // FUNCIÓN 2: Consulta de desglose al hacer clic en un Mes del Gráfico
+        // NIVEL 2 (A): Modal Mensual con gráfico clicable hacia NIVEL 3
         function openMonthDrilldown(token, label) {
+            activeMonthToken = token;
             fetch(`/api/month-activity/?token=${token}&label=${label}`)
                 .then(res => res.json())
                 .then(data => {
@@ -511,20 +786,116 @@
                     document.getElementById('mMonthPomos').innerText = data.total_pomos;
                     document.getElementById('mMonthRewards').innerText = data.total_rewards;
 
-                    // Renderizar o actualizar gráfico de desglose mensual
                     const ctxModal = document.getElementById('monthRewardBreakdownChart').getContext('2d');
                     if (monthChartInstance) {
                         monthChartInstance.destroy();
                     }
+
+                    const totalMonthRewards = data.reward_breakdown.reduce((a, b) => a + b, 0);
+
                     monthChartInstance = new Chart(ctxModal, {
                         type: 'bar',
                         data: {
                             labels: ['Pausas Activas', 'Descarga de Apuntes', 'Puntos Extra', 'Horario Libre'],
                             datasets: [{
-                                label: 'Canjes en este Mes',
+                                label: 'Canjes en este Mes (Clic para ver usuarios)',
                                 data: data.reward_breakdown,
                                 backgroundColor: ['#0d6efd', '#20c997', '#ffc107', '#6f42c1'],
-                                borderRadius: 4
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                title: {
+                                    display: totalMonthRewards === 0,
+                                    text: 'Sin canjes registrados en este mes',
+                                    color: '#6c757d'
+                                }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, suggestedMax: 4, ticks: { stepSize: 1, precision: 0 } }
+                            },
+                            onClick: (e, elements) => {
+                                if (elements.length > 0) {
+                                    const rewardIdx = elements[0].index;
+                                    openMonthRewardLevel3(activeMonthToken, rewardIdx);
+                                }
+                            }
+                        }
+                    });
+
+                    monthModal.show();
+                });
+        }
+
+        // NIVEL 3: Sub-gráfico anidado sobre el Modal Mensual
+        function openMonthRewardLevel3(token, rewardIndex) {
+            fetch(`/api/month-reward-detail/?token=${token}&reward_index=${rewardIndex}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('mRewardLevel3Title').innerText = `${data.reward_name} (${data.month_token})`;
+                    document.getElementById('mRewardLevel3Subtitle').innerText =
+                        data.total_claims > 0
+                            ? `Total de ${data.total_claims} canje(s) distribuidos por estudiante:`
+                            : 'Ningún estudiante canjeó esta recompensa en este mes.';
+
+                    const ctxLevel3 = document.getElementById('rewardUsersChart').getContext('2d');
+                    if (level3ChartInstance) {
+                        level3ChartInstance.destroy();
+                    }
+
+                    level3ChartInstance = new Chart(ctxLevel3, {
+                        type: 'bar',
+                        data: {
+                            labels: data.labels.length > 0 ? data.labels : ['Sin registros'],
+                            datasets: [{
+                                label: 'Canjes por Usuario',
+                                data: data.counts.length > 0 ? data.counts : [0],
+                                backgroundColor: '#0d6efd',
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { beginAtZero: true, suggestedMax: 3, ticks: { stepSize: 1, precision: 0 } }
+                            }
+                        }
+                    });
+
+                    rewardLevel3Modal.show();
+                });
+        }
+
+        // NIVEL 2 (B): Desglose por Grupo de Riesgo
+        function openRiskDrilldown(riskIndex) {
+            fetch(`/api/risk-detail/?risk_index=${riskIndex}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('mRiskTitle').innerText = `Grupo: ${data.risk_name}`;
+                    document.getElementById('mRiskUserCount').innerText = data.user_count;
+                    document.getElementById('mRiskAvgXP').innerText = `${data.avg_xp} XP`;
+
+                    const ctxRiskModal = document.getElementById('riskUsersChart').getContext('2d');
+                    if (riskChartInstance) {
+                        riskChartInstance.destroy();
+                    }
+
+                    const colorMap = { low: '#198754', medium: '#ffc107', high: '#dc3545' };
+
+                    riskChartInstance = new Chart(ctxRiskModal, {
+                        type: 'bar',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Pomodoros Totales',
+                                data: data.pomo_counts,
+                                backgroundColor: colorMap[data.risk_key] || '#0d6efd',
+                                borderRadius: 6
                             }]
                         },
                         options: {
@@ -536,9 +907,43 @@
                         }
                     });
 
-                    monthModal.show();
-                })
-                .catch(err => console.error('Error fetching month drilldown:', err));
+                    riskModal.show();
+                });
+        }
+
+        // NIVEL 2 (C): Desglose por Día de la Semana
+        function openDayDrilldown(dayIndex) {
+            fetch(`/api/day-pomo-detail/?day_index=${dayIndex}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('mDayTitle').innerText = `Actividad del ${data.day_name}`;
+                    document.getElementById('mDaySessions').innerText = data.total_sessions;
+                    document.getElementById('mDayHours').innerText = `${data.total_hours}h`;
+
+                    const ctxDayModal = document.getElementById('dayDurationChart').getContext('2d');
+                    if (dayChartInstance) {
+                        dayChartInstance.destroy();
+                    }
+
+                    dayChartInstance = new Chart(ctxDayModal, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.labels.length > 0 ? data.labels : ['Sin sesiones'],
+                            datasets: [{
+                                data: data.counts.length > 0 ? data.counts : [1],
+                                backgroundColor: data.counts.length > 0
+                                    ? ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1', '#20c997']
+                                    : ['#e9ecef']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+
+                    dayModal.show();
+                });
         }
     </script>
   </body>
