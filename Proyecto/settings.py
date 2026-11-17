@@ -25,7 +25,11 @@ SECRET_KEY = "django-insecure-o4449hh6_qsa%7v@h^v7x)qieowiz-5wh7_y#s$wd3t57mzk*&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*", ".vercel.app", "localhost", "127.0.0.1"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.vercel.app",
+]
 
 
 # Application definition
@@ -74,6 +78,7 @@ WSGI_APPLICATION = "Proyecto.wsgi.application"
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
 import pymysql
+pymysql.version_info = (2, 2, 8, "final", 0)
 pymysql.install_as_MySQLdb()
 
 DATABASES = {
@@ -121,7 +126,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # Email
