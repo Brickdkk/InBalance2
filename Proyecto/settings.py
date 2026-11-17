@@ -82,7 +82,7 @@ DATABASES = {
         'NAME': 'InBalance',
         'USER': 'ADMIN',
         'PASSWORD': '1234',
-        'HOST': '52.7.136.32',
+        'HOST': '18.215.173.52',
         'PORT': '3306',
     }
 }

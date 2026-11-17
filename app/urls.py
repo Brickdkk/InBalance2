@@ -5,7 +5,7 @@ from . import views
 urlpatterns = [
     path('', views.index, name='index'),
 
-    # Vista de Usuario y Acciones en Vivo
+    # Vista de Usuario y Acciones en Base de Datos
     path('user-dashboard/', views.user_view, name='user_view'),
     path('user-dashboard/log-pomodoro/', views.log_pomodoro, name='log_pomodoro'),
     path('user-dashboard/redeem-reward/', views.redeem_reward, name='redeem_reward'),
@@ -17,7 +17,8 @@ urlpatterns = [
     path('admin-dashboard/edit-user/<int:user_id>/', views.edit_user, name='edit_user'),
     path('admin-dashboard/delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
 
-    # Endpoints API para gráficos anidados y modales
+    # Endpoints API para Cross-Filtering, gráficos anidados y modales
+    path('api/cross-filter/', views.cross_filter_api, name='cross_filter_api'),
     path('api/user-stats/<int:user_id>/', views.user_stats_api, name='user_stats_api'),
     path('api/month-activity/', views.month_activity_api, name='month_activity_api'),
     path('api/month-reward-detail/', views.month_reward_detail_api, name='month_reward_detail_api'),

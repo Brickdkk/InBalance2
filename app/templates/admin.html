@@ -11,287 +11,522 @@
     <style>
       body {
         background-color: #f4f7f6;
+        overflow-x: hidden;
       }
+
+      /* Sidebar fija en escritorio */
+      .admin-sidebar {
+        width: 260px;
+        min-height: 100vh;
+        background-color: #ffffff;
+        border-right: 1px solid #e2e8f0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1030;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 1.25rem 1rem;
+      }
+
+      .admin-main {
+        margin-left: 260px;
+        min-height: 100vh;
+      }
+
+      .sidebar-brand-badge {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: #0f172a;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.65rem 0.9rem;
+        border-radius: 12px;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.18s ease;
+      }
+
+      .sidebar-link:hover {
+        background-color: #f8fafc;
+        color: #0d6efd;
+      }
+
+      .sidebar-link.active {
+        background-color: #eff6ff;
+        color: #0d6efd;
+      }
+
       .card {
         border: none;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
       }
+
+      .section-divider {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
       .clickable-row {
         cursor: pointer;
         transition: background-color 0.15s ease-in-out;
       }
+
       .clickable-row:hover {
         background-color: #f1f5f9 !important;
       }
+
       .interactive-canvas {
         cursor: pointer;
       }
+
       /* Nivel 3: Modal anidado sobre un modal ya abierto */
       .modal-level-3 {
         z-index: 1065 !important;
         background-color: rgba(15, 23, 42, 0.55);
       }
+
+      @media (max-width: 991.98px) {
+        .admin-sidebar {
+          display: none;
+        }
+        .admin-main {
+          margin-left: 0;
+        }
+      }
     </style>
   </head>
   <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
-      <div class="container-fluid">
-        <a class="navbar-brand fw-bold text-primary" href="{% url 'index' %}">InBalance</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
-          <span class="navbar-toggler-icon"></span>
-        </button>
+    <!-- ==================== SIDEBAR DESKTOP ==================== -->
+    <aside class="admin-sidebar">
+      <div>
+        <a href="{% url 'index' %}" class="d-flex align-items-center gap-2 text-decoration-none px-2 mb-4">
+          <span class="sidebar-brand-badge">IB</span>
+          <span class="fw-bold fs-5 text-dark">InBalance</span>
+          <span class="badge bg-dark ms-auto" style="font-size: 0.65rem;">ADMIN</span>
+        </a>
 
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'index' %}">Inicio</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Pomodoro</a>
-            </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
-                Usuario
-              </a>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{% url 'user_view' %}">Perfil</a></li>
-                <li><a class="dropdown-item active" href="{% url 'admin_view' %}">Administrador</a></li>
-                <li><a class="dropdown-item" href="#">Recursos</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Configuración</a></li>
-              </ul>
-            </li>
-          </ul>
+        <div class="d-flex align-items-center gap-2 p-2 rounded-3 bg-light border mb-4">
+          <div class="rounded-circle bg-primary text-white fw-bold d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px;">
+            {{ user.username|slice:":2"|upper }}
+          </div>
+          <div class="overflow-hidden">
+            <div class="fw-bold small text-dark text-truncate">{{ user.username }}</div>
+            <div class="text-muted" style="font-size: 0.72rem;">
+              {% if user.is_superuser %}Superadministrador{% else %}Staff Admin{% endif %}
+            </div>
+          </div>
+        </div>
 
+        <nav class="d-flex flex-column gap-1">
+          <a href="#resumen" class="sidebar-link active" onclick="setActiveSidebarLink(this)">
+            <i class="bi bi-grid-1x2-fill"></i>
+            <span>Resumen Global</span>
+          </a>
+          <a href="#bloque-retencion" class="sidebar-link" onclick="setActiveSidebarLink(this)">
+            <i class="bi bi-shield-exclamation"></i>
+            <span>Retención y Riesgo</span>
+          </a>
+          <a href="#bloque-habitos" class="sidebar-link" onclick="setActiveSidebarLink(this)">
+            <i class="bi bi-bar-chart-line-fill"></i>
+            <span>Hábitos y Recompensas</span>
+          </a>
+          <a href="#usuarios" class="sidebar-link" onclick="setActiveSidebarLink(this)">
+            <i class="bi bi-people-fill"></i>
+            <span>Mantenedor Usuarios</span>
+            <span class="badge bg-primary-subtle text-primary ms-auto rounded-pill">{{ users|length }}</span>
+          </a>
+          <button type="button" class="sidebar-link border-0 bg-transparent text-start w-100" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="bi bi-person-plus-fill text-success"></i>
+            <span>Nueva Cuenta</span>
+          </button>
+
+          <hr class="my-2 text-muted">
+
+          <a href="{% url 'user_view' %}" class="sidebar-link">
+            <i class="bi bi-person-circle text-primary"></i>
+            <span>Vista Usuario</span>
+          </a>
+          <a href="{% url 'index' %}" class="sidebar-link">
+            <i class="bi bi-house-door"></i>
+            <span>Inicio</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="pt-3 border-top">
+        <div class="d-flex align-items-center justify-content-between px-2 mb-2 small">
+          <span class="text-muted">Base de Datos</span>
+          <span class="badge bg-success-subtle text-success"><i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>Activa</span>
+        </div>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
+            <i class="bi bi-box-arrow-left"></i>
+            <span>Cerrar Sesión</span>
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- ==================== SIDEBAR MÓVIL ==================== -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileAdminSidebar">
+      <div class="offcanvas-header border-bottom">
+        <div class="d-flex align-items-center gap-2">
+          <span class="sidebar-brand-badge">IB</span>
+          <h5 class="offcanvas-title fw-bold mb-0">InBalance Admin</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+      </div>
+      <div class="offcanvas-body d-flex flex-column justify-content-between">
+        <nav class="d-flex flex-column gap-1">
+          <a href="#resumen" class="sidebar-link active" data-bs-dismiss="offcanvas">
+            <i class="bi bi-grid-1x2-fill"></i>
+            <span>Resumen Global</span>
+          </a>
+          <a href="#bloque-retencion" class="sidebar-link" data-bs-dismiss="offcanvas">
+            <i class="bi bi-shield-exclamation"></i>
+            <span>Retención y Riesgo</span>
+          </a>
+          <a href="#bloque-habitos" class="sidebar-link" data-bs-dismiss="offcanvas">
+            <i class="bi bi-bar-chart-line-fill"></i>
+            <span>Hábitos y Recompensas</span>
+          </a>
+          <a href="#usuarios" class="sidebar-link" data-bs-dismiss="offcanvas">
+            <i class="bi bi-people-fill"></i>
+            <span>Mantenedor Usuarios</span>
+          </a>
+          <button type="button" class="sidebar-link border-0 bg-transparent text-start w-100" data-bs-dismiss="offcanvas" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="bi bi-person-plus-fill text-success"></i>
+            <span>Nueva Cuenta</span>
+          </button>
+          <hr class="my-2">
+          <a href="{% url 'user_view' %}" class="sidebar-link">
+            <i class="bi bi-person-circle text-primary"></i>
+            <span>Vista Usuario</span>
+          </a>
+          <a href="{% url 'index' %}" class="sidebar-link">
+            <i class="bi bi-house-door"></i>
+            <span>Inicio</span>
+          </a>
+        </nav>
+
+        <form method="post" action="{% url 'logout' %}" class="mt-4">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+            <i class="bi bi-box-arrow-left me-1"></i>Cerrar Sesión
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== CONTENIDO PRINCIPAL ==================== -->
+    <div class="admin-main">
+      <!-- Navbar Móvil -->
+      <nav class="navbar bg-white border-bottom d-lg-none px-3">
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileAdminSidebar">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <span class="fw-bold text-primary">InBalance Admin</span>
+        </div>
+        <span class="badge bg-dark">{{ user.username }}</span>
+      </nav>
+
+      <div class="container-fluid px-4 px-lg-5 py-4" style="max-width: 1380px;">
+
+        <!-- Alertas -->
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Cabecera -->
+        <div id="resumen" class="d-flex flex-wrap justify-content-between align-items-center mb-4 bg-white p-4 rounded-4 shadow-sm">
+          <div>
+            <span class="badge bg-dark mb-1">Modo Administrador</span>
+            <h3 class="fw-bold mb-1">Panel de Control del Sistema</h3>
+            <p class="text-muted mb-0">Todos los gráficos están enlazados: haz clic en cualquier categoría para filtrar el panel completo o explorar sub-niveles.</p>
+          </div>
+          <div class="d-flex gap-2 mt-3 mt-md-0">
+            <button type="button" class="btn btn-success px-3" data-bs-toggle="modal" data-bs-target="#createUserModal">
+              <i class="bi bi-person-plus-fill me-1"></i>Nuevo Usuario
+            </button>
+            <a href="{% url 'user_view' %}" class="btn btn-primary px-3">
+              <i class="bi bi-person-circle me-1"></i>Vista Usuario
+            </a>
+          </div>
+        </div>
+
+        <!-- Barra de Estado del Filtro Cruzado (Cross-Filtering) -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center bg-white border rounded-4 px-4 py-3 mb-4 shadow-sm">
           <div class="d-flex align-items-center gap-2">
-            <span class="navbar-text small me-2 text-muted">Admin: <strong>{{ user.username }}</strong></span>
-            <form method="post" action="{% url 'logout' %}" class="d-inline">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-outline-danger btn-sm">Cerrar Sesión</button>
-            </form>
+            <i class="bi bi-funnel-fill text-primary fs-5"></i>
+            <span class="text-muted small">Contexto activo:</span>
+            <span class="badge bg-primary fs-6 fw-semibold" id="activeFilterBadge">Vista Global (Todos los datos)</span>
           </div>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Panel de Administrador -->
-    <div class="container py-4">
-
-      <!-- Alertas -->
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-
-      <!-- Cabecera -->
-      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 bg-white p-4 rounded-3 shadow-sm">
-        <div>
-          <span class="badge bg-dark mb-1">Modo Administrador</span>
-          <h3 class="fw-bold mb-1">Panel de Control del Sistema</h3>
-          <p class="text-muted mb-0">Haz clic en los gráficos para explorar sub-niveles de datos o administra cuentas en la tabla inferior.</p>
-        </div>
-        <div class="d-flex gap-2 mt-3 mt-md-0">
-          <a href="{% url 'index' %}" class="btn btn-outline-secondary px-3">
-            <i class="bi bi-house me-1"></i>Inicio
-          </a>
-          <a href="{% url 'user_view' %}" class="btn btn-primary px-3">
-            <i class="bi bi-person-circle me-1"></i>Vista Usuario
-          </a>
-        </div>
-      </div>
-
-      <!-- Métricas Globales -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <div class="card p-3 h-100">
-            <span class="text-muted small">Usuarios Registrados</span>
-            <h4 class="fw-bold text-dark mt-1 mb-1">{{ total_users }}</h4>
-            <small class="text-success"><i class="bi bi-check-circle"></i> Sincronizado</small>
+          <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+            <button type="button" class="btn btn-sm btn-outline-primary d-none" id="openDetailContextBtn">
+              <i class="bi bi-zoom-in me-1"></i>Ver desglose detallado
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="resetFilterBtn" onclick="applyCrossFilter('all', '')">
+              <i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer vista global
+            </button>
           </div>
         </div>
 
-        <div class="col-md-3">
-          <div class="card p-3 h-100">
-            <span class="text-muted small">Riesgo de Atraso Global</span>
-            <h4 class="fw-bold text-warning mt-1 mb-1">{{ risk_high }} Usuarios</h4>
-            <small class="text-muted">Con alertas activas</small>
-          </div>
-        </div>
-
-        <div class="col-md-3">
-          <div class="card p-3 h-100">
-            <span class="text-muted small">Pomodoros Completados</span>
-            <h4 class="fw-bold text-danger mt-1 mb-1">{{ total_pomodoros }}</h4>
-            <small class="text-muted">Total acumulado</small>
-          </div>
-        </div>
-
-        <div class="col-md-3">
-          <div class="card p-3 h-100">
-            <span class="text-muted small">Rewards Canjeados</span>
-            <h4 class="fw-bold text-primary mt-1 mb-1">{{ total_rewards }}</h4>
-            <small class="text-muted">Total canjes acumulados</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gráficos Principales (Nivel 1) -->
-      <div class="row g-4 mb-4">
-        <!-- Gráfico 1: Crecimiento (Lleva a Nivel 2 -> Nivel 3) -->
-        <div class="col-lg-6">
-          <div class="card p-4 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h6 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i>Crecimiento de Usuarios</h6>
-              <span class="badge bg-primary-subtle text-primary small"><i class="bi bi-layers me-1"></i>3 Niveles (Clic en mes)</span>
+        <!-- Métricas Globales (Dinámicas al filtrar) -->
+        <div class="row g-4 mb-5">
+          <div class="col-md-3">
+            <div class="card p-4 h-100">
+              <span class="text-muted small">Cuentas en Segmento</span>
+              <h3 class="fw-bold text-dark mt-2 mb-1" id="kpiTotalUsers">{{ total_users }}</h3>
+              <small class="text-success"><i class="bi bi-check-circle"></i> Sincronizado</small>
             </div>
-            <div style="height: 250px; position: relative;">
-              <canvas id="usersGrowthChart" class="interactive-canvas"></canvas>
+          </div>
+
+          <div class="col-md-3">
+            <div class="card p-4 h-100">
+              <span class="text-muted small">En Alto Riesgo</span>
+              <h3 class="fw-bold text-warning mt-2 mb-1" id="kpiRiskHigh">{{ risk_high }} Usuarios</h3>
+              <small class="text-muted">Con alertas activas</small>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="card p-4 h-100">
+              <span class="text-muted small">Pomodoros Completados</span>
+              <h3 class="fw-bold text-danger mt-2 mb-1" id="kpiTotalPomos">{{ total_pomodoros }}</h3>
+              <small class="text-muted">Sesiones del segmento</small>
+            </div>
+          </div>
+
+          <div class="col-md-3">
+            <div class="card p-4 h-100">
+              <span class="text-muted small">Rewards Canjeados</span>
+              <h3 class="fw-bold text-primary mt-2 mb-1" id="kpiTotalRewards">{{ total_rewards }}</h3>
+              <small class="text-muted">Canjes del segmento</small>
             </div>
           </div>
         </div>
 
-        <!-- Gráfico 2: Riesgo (Lleva a Nivel 2) -->
-        <div class="col-lg-6">
-          <div class="card p-4 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h6 class="fw-bold mb-0"><i class="bi bi-pie-chart text-warning me-2"></i>Distribución de Riesgo de Atraso</h6>
-              <span class="badge bg-warning-subtle text-warning-emphasis small">Clic en sector</span>
+        <!-- ===================================================================
+             BLOQUE 1: RETENCIÓN Y RIESGO ACADÉMICO
+             =================================================================== -->
+        <div id="bloque-retencion" class="mb-5">
+          <div class="section-divider">
+            <div>
+              <h5 class="fw-bold text-dark mb-0"><i class="bi bi-shield-exclamation text-warning me-2"></i>1. Retención y Estado de Riesgo</h5>
+              <small class="text-muted">Analiza la evolución de registros y filtra todo el tablero por nivel de riesgo estudiantil.</small>
             </div>
-            <div style="height: 250px; position: relative;">
-              <canvas id="riskDistributionChart" class="interactive-canvas"></canvas>
-            </div>
+            <span class="badge bg-light text-dark border">Bloque 1 de 2</span>
           </div>
-        </div>
 
-        <!-- Gráfico 3: Pomodoros 7 Días (Lleva a Nivel 2) -->
-        <div class="col-lg-6">
-          <div class="card p-4 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h6 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill text-danger me-2"></i>Pomodoros Completados (Últimos 7 Días)</h6>
-              <span class="badge bg-danger-subtle text-danger small">Clic en día</span>
-            </div>
-            <div style="height: 250px; position: relative;">
-              <canvas id="pomodoroChart" class="interactive-canvas"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Gráfico 4: Recompensas Globales -->
-        <div class="col-lg-6">
-          <div class="card p-4 h-100">
-            <h6 class="fw-bold mb-2"><i class="bi bi-trophy-fill text-success me-2"></i>Recompensas Más Canjeadas</h6>
-            <div style="height: 250px; position: relative;">
-              <canvas id="rewardsChart"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mantenedor de Usuarios (CRUD Completo) -->
-      <div class="row g-4">
-        <div class="col-12">
-          <div class="card p-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-              <div>
-                <h6 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Mantenedor de Usuarios en Base de Datos</h6>
-                <small class="text-muted">Haz clic en una fila para ver estadísticas o usa los botones para crear, editar o eliminar cuentas.</small>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-secondary-subtle text-secondary">{{ users|length }} cuenta(s)</span>
-                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
-                  <i class="bi bi-person-plus-fill me-1"></i>Nuevo Usuario
-                </button>
+          <div class="row g-4">
+            <!-- Gráfico 1: Crecimiento de Usuarios (Cadena de 3 Niveles) -->
+            <div class="col-lg-7">
+              <div class="card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h6 class="fw-bold mb-1"><i class="bi bi-graph-up text-primary me-2"></i>Crecimiento de Usuarios</h6>
+                    <small class="text-muted">Evolución acumulada en los últimos 6 meses</small>
+                  </div>
+                  <span class="badge bg-primary-subtle text-primary"><i class="bi bi-layers me-1"></i>3 Niveles (Clic en mes)</span>
+                </div>
+                <div style="height: 290px; position: relative;">
+                  <canvas id="usersGrowthChart" class="interactive-canvas"></canvas>
+                </div>
               </div>
             </div>
-            
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Usuario</th>
-                    <th>Rol</th>
-                    <th>Riesgo</th>
-                    <th>XP</th>
-                    <th>Registro</th>
-                    <th class="text-center">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for u in users %}
-                  <tr class="clickable-row" onclick="inspectUser({{ u.id }})">
-                    <td>
-                      <div class="fw-semibold text-primary"><i class="bi bi-person me-1"></i>{{ u.username }}</div>
-                      <small class="text-muted">{{ u.email|default:"Sin correo electrónico" }}</small>
-                    </td>
-                    <td>
-                      {% if u.is_superuser %}
-                        <span class="badge bg-danger">Superadmin</span>
-                      {% elif u.is_staff %}
-                        <span class="badge bg-warning text-dark">Staff Admin</span>
-                      {% else %}
-                        <span class="badge bg-success-subtle text-success">Estudiante</span>
-                      {% endif %}
-                    </td>
-                    <td>
-                      {% if u.profile.risk_level == 'high' %}
-                        <span class="badge bg-danger-subtle text-danger">Alto</span>
-                      {% elif u.profile.risk_level == 'medium' %}
-                        <span class="badge bg-warning-subtle text-warning">Medio</span>
-                      {% else %}
-                        <span class="badge bg-success-subtle text-success">Bajo</span>
-                      {% endif %}
-                    </td>
-                    <td><span class="fw-semibold text-dark">{{ u.profile.xp|default:0 }}</span> <small class="text-muted">XP</small></td>
-                    <td><small class="text-muted">{{ u.date_joined|date:"d/m/Y H:i" }}</small></td>
-                    <td class="text-center" onclick="event.stopPropagation();">
-                      <div class="d-inline-flex gap-1">
-                        <!-- Botón Editar -->
-                        <button type="button"
-                                class="btn btn-sm btn-outline-primary"
-                                title="Modificar usuario"
-                                data-id="{{ u.id }}"
-                                data-username="{{ u.username }}"
-                                data-email="{{ u.email }}"
-                                data-role="{% if u.is_superuser %}superuser{% elif u.is_staff %}staff{% else %}student{% endif %}"
-                                data-risk="{{ u.profile.risk_level|default:'low' }}"
-                                data-xp="{{ u.profile.xp|default:0 }}"
-                                onclick="openEditUserModal(this)">
-                          <i class="bi bi-pencil-square"></i> Editar
-                        </button>
 
-                        <!-- Botón Eliminar -->
-                        {% if u == request.user %}
-                          <span class="badge bg-light text-muted border d-flex align-items-center px-2">Sesión actual</span>
+            <!-- Gráfico 2: Distribución de Riesgo (Cross-Filter Maestro + Nivel 2) -->
+            <div class="col-lg-5">
+              <div class="card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h6 class="fw-bold mb-1"><i class="bi bi-pie-chart text-warning me-2"></i>Distribución de Riesgo</h6>
+                    <small class="text-muted">Clic en un color para filtrar todo el panel</small>
+                  </div>
+                  <span class="badge bg-warning-subtle text-warning-emphasis">Filtro cruzado</span>
+                </div>
+                <div style="height: 290px; position: relative;">
+                  <canvas id="riskDistributionChart" class="interactive-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             BLOQUE 2: HÁBITOS DE ESTUDIO VS. GAMIFICACIÓN (CORRELACIÓN DIRECTA)
+             =================================================================== -->
+        <div id="bloque-habitos" class="mb-5">
+          <div class="section-divider">
+            <div>
+              <h5 class="fw-bold text-dark mb-0"><i class="bi bi-arrow-left-right text-danger me-2"></i>2. Hábitos de Estudio vs. Gamificación</h5>
+              <small class="text-muted">Selecciona un día o una recompensa para cruzar el ritmo de estudio con los canjes de premios.</small>
+            </div>
+            <span class="badge bg-light text-dark border">Bloque 2 de 2</span>
+          </div>
+
+          <div class="row g-4">
+            <!-- Gráfico 3: Pomodoros por Día -->
+            <div class="col-lg-6">
+              <div class="card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h6 class="fw-bold mb-1"><i class="bi bi-bar-chart-fill text-danger me-2"></i>Pomodoros (Últimos 7 Días)</h6>
+                    <small class="text-muted">Clic en un día para filtrar y ver bloques horarios</small>
+                  </div>
+                  <span class="badge bg-danger-subtle text-danger">Filtro por día</span>
+                </div>
+                <div style="height: 290px; position: relative;">
+                  <canvas id="pomodoroChart" class="interactive-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gráfico 4: Recompensas Canjeadas -->
+            <div class="col-lg-6">
+              <div class="card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h6 class="fw-bold mb-1"><i class="bi bi-trophy-fill text-success me-2"></i>Recompensas Más Canjeadas</h6>
+                    <small class="text-muted">Clic en un premio para ver hábitos de quienes lo usan</small>
+                  </div>
+                  <span class="badge bg-success-subtle text-success">Filtro por premio</span>
+                </div>
+                <div style="height: 290px; position: relative;">
+                  <canvas id="rewardsChart" class="interactive-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================================================================
+             MANTENEDOR DE USUARIOS (CRUD COMPLETO)
+             =================================================================== -->
+        <div id="usuarios" class="row g-4">
+          <div class="col-12">
+            <div class="card p-4">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                  <h6 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Mantenedor de Usuarios en Base de Datos</h6>
+                  <small class="text-muted">Haz clic en una fila para ver estadísticas o usa los botones para crear, editar o eliminar cuentas.</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-secondary-subtle text-secondary">{{ users|length }} cuenta(s)</span>
+                  <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                    <i class="bi bi-person-plus-fill me-1"></i>Nuevo Usuario
+                  </button>
+                </div>
+              </div>
+              
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Usuario</th>
+                      <th>Rol</th>
+                      <th>Riesgo</th>
+                      <th>XP</th>
+                      <th>Registro</th>
+                      <th class="text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for u in users %}
+                    <tr class="clickable-row" onclick="inspectUser({{ u.id }})">
+                      <td>
+                        <div class="fw-semibold text-primary"><i class="bi bi-person me-1"></i>{{ u.username }}</div>
+                        <small class="text-muted">{{ u.email|default:"Sin correo electrónico" }}</small>
+                      </td>
+                      <td>
+                        {% if u.is_superuser %}
+                          <span class="badge bg-danger">Superadmin</span>
+                        {% elif u.is_staff %}
+                          <span class="badge bg-warning text-dark">Staff Admin</span>
                         {% else %}
-                          <form method="POST" action="{% url 'delete_user' u.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar definitivamente a {{ u.username }} de la base de datos?');" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar usuario">
-                              <i class="bi bi-trash"></i> Eliminar
-                            </button>
-                          </form>
+                          <span class="badge bg-success-subtle text-success">Estudiante</span>
                         {% endif %}
-                      </div>
-                    </td>
-                  </tr>
-                  {% empty %}
-                  <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">No se encontraron usuarios en la base de datos.</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+                      </td>
+                      <td>
+                        {% if u.profile.risk_level == 'high' %}
+                          <span class="badge bg-danger-subtle text-danger">Alto</span>
+                        {% elif u.profile.risk_level == 'medium' %}
+                          <span class="badge bg-warning-subtle text-warning">Medio</span>
+                        {% else %}
+                          <span class="badge bg-success-subtle text-success">Bajo</span>
+                        {% endif %}
+                      </td>
+                      <td><span class="fw-semibold text-dark">{{ u.profile.xp|default:0 }}</span> <small class="text-muted">XP</small></td>
+                      <td><small class="text-muted">{{ u.date_joined|date:"d/m/Y H:i" }}</small></td>
+                      <td class="text-center" onclick="event.stopPropagation();">
+                        <div class="d-inline-flex gap-1">
+                          <button type="button"
+                                  class="btn btn-sm btn-outline-primary"
+                                  title="Modificar usuario"
+                                  data-id="{{ u.id }}"
+                                  data-username="{{ u.username }}"
+                                  data-email="{{ u.email }}"
+                                  data-role="{% if u.is_superuser %}superuser{% elif u.is_staff %}staff{% else %}student{% endif %}"
+                                  data-risk="{{ u.profile.risk_level|default:'low' }}"
+                                  data-xp="{{ u.profile.xp|default:0 }}"
+                                  onclick="openEditUserModal(this)">
+                            <i class="bi bi-pencil-square"></i> Editar
+                          </button>
+
+                          {% if u == request.user %}
+                            <span class="badge bg-light text-muted border d-flex align-items-center px-2">Sesión actual</span>
+                          {% else %}
+                            <form method="POST" action="{% url 'delete_user' u.id %}" onsubmit="return confirm('¿Seguro que deseas eliminar definitivamente a {{ u.username }} de la base de datos?');" class="d-inline">
+                              {% csrf_token %}
+                              <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar usuario">
+                                <i class="bi bi-trash"></i> Eliminar
+                              </button>
+                            </form>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted">No se encontraron usuarios en la base de datos.</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
 
     <!-- MODAL CREAR USUARIO (CREATE) -->
@@ -599,6 +834,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        function setActiveSidebarLink(el) {
+            document.querySelectorAll('.admin-sidebar .sidebar-link').forEach(link => link.classList.remove('active'));
+            el.classList.add('active');
+        }
+
         const chartElement = document.getElementById('chart-data');
         const growthLabels = JSON.parse(chartElement.dataset.growthLabels || '[]');
         const growthCounts = JSON.parse(chartElement.dataset.growthCounts || '[]');
@@ -622,7 +862,6 @@
         let dayChartInstance = null;
         let activeMonthToken = null;
 
-        // Abrir Modal de Edición precargado con datos de la fila
         function openEditUserModal(btn) {
             const id = btn.dataset.id;
             document.getElementById('editUserForm').action = `/admin-dashboard/edit-user/${id}/`;
@@ -635,9 +874,8 @@
             editUserModal.show();
         }
 
-        // 1. NIVEL 1 -> NIVEL 2: Crecimiento de Usuarios
-        const ctxUsers = document.getElementById('usersGrowthChart').getContext('2d');
-        new Chart(ctxUsers, {
+        // Instancias principales (para poder actualizarlas con Cross-Filtering)
+        const usersChartInstance = new Chart(document.getElementById('usersGrowthChart').getContext('2d'), {
             type: 'line',
             data: {
                 labels: growthLabels,
@@ -669,15 +907,13 @@
             }
         });
 
-        // 2. NIVEL 1 -> NIVEL 2: Distribución de Riesgo
-        const ctxRisk = document.getElementById('riskDistributionChart').getContext('2d');
-        const totalRisk = riskLow + riskMed + riskHigh;
-        new Chart(ctxRisk, {
+        const totalRiskInit = riskLow + riskMed + riskHigh;
+        const riskChartMain = new Chart(document.getElementById('riskDistributionChart').getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: ['Bajo Riesgo', 'Riesgo Medio', 'Alto Riesgo'],
                 datasets: [{
-                    data: totalRisk > 0 ? [riskLow, riskMed, riskHigh] : [1, 0, 0],
+                    data: totalRiskInit > 0 ? [riskLow, riskMed, riskHigh] : [1, 0, 0],
                     backgroundColor: ['#198754', '#ffc107', '#dc3545']
                 }]
             },
@@ -685,21 +921,21 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 onClick: (e, elements) => {
-                    if (elements.length > 0 && totalRisk > 0) {
-                        openRiskDrilldown(elements[0].index);
+                    if (elements.length > 0) {
+                        const idx = elements[0].index;
+                        const riskKeys = ['low', 'medium', 'high'];
+                        applyCrossFilter('risk', riskKeys[idx], () => openRiskDrilldown(idx));
                     }
                 }
             }
         });
 
-        // 3. NIVEL 1 -> NIVEL 2: Pomodoros Últimos 7 Días
-        const ctxPomo = document.getElementById('pomodoroChart').getContext('2d');
-        new Chart(ctxPomo, {
+        const pomoChartMain = new Chart(document.getElementById('pomodoroChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
                 datasets: [{
-                    label: 'Pomodoros Globales',
+                    label: 'Pomodoros Completados',
                     data: pomoDays,
                     backgroundColor: '#dc3545',
                     borderRadius: 6
@@ -713,15 +949,14 @@
                 },
                 onClick: (e, elements) => {
                     if (elements.length > 0) {
-                        openDayDrilldown(elements[0].index);
+                        const idx = elements[0].index;
+                        applyCrossFilter('day', String(idx), () => openDayDrilldown(idx));
                     }
                 }
             }
         });
 
-        // 4. Recompensas Globales
-        const ctxRewards = document.getElementById('rewardsChart').getContext('2d');
-        new Chart(ctxRewards, {
+        const rewardsChartMain = new Chart(document.getElementById('rewardsChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: ['Pausas Activas', 'Descarga de Apuntes', 'Puntos Extra', 'Horario Libre'],
@@ -737,9 +972,64 @@
                 maintainAspectRatio: false,
                 scales: {
                     y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
+                },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const rewardKeys = ['pausas', 'apuntes', 'puntos', 'libre'];
+                        applyCrossFilter('reward', rewardKeys[elements[0].index], null);
+                    }
                 }
             }
         });
+
+        // FUNCIÓN DE CROSS-FILTERING GLOBAL (SINCRONIZA TODOS LOS GRÁFICOS)
+        function applyCrossFilter(type, value, detailCallback) {
+            fetch(`/api/cross-filter/?type=${type}&value=${value}`)
+                .then(res => res.json())
+                .then(data => {
+                    // 1. Actualizar KPIs superiores
+                    document.getElementById('kpiTotalUsers').innerText = data.total_users;
+                    document.getElementById('kpiRiskHigh').innerText = `${data.risk_high} Usuarios`;
+                    document.getElementById('kpiTotalPomos').innerText = data.total_pomodoros;
+                    document.getElementById('kpiTotalRewards').innerText = data.total_rewards;
+
+                    // 2. Actualizar etiqueta de estado y botones
+                    const badge = document.getElementById('activeFilterBadge');
+                    const resetBtn = document.getElementById('resetFilterBtn');
+                    const detailBtn = document.getElementById('openDetailContextBtn');
+
+                    badge.innerText = data.filter_label;
+                    if (type === 'all') {
+                        badge.className = 'badge bg-primary fs-6 fw-semibold';
+                        resetBtn.classList.add('d-none');
+                        detailBtn.classList.add('d-none');
+                    } else {
+                        badge.className = 'badge bg-warning text-dark fs-6 fw-semibold';
+                        resetBtn.classList.remove('d-none');
+                        if (detailCallback) {
+                            detailBtn.classList.remove('d-none');
+                            detailBtn.onclick = detailCallback;
+                        } else {
+                            detailBtn.classList.add('d-none');
+                        }
+                    }
+
+                    // 3. Actualizar todos los gráficos en vivo
+                    usersChartInstance.data.labels = data.growth_labels;
+                    usersChartInstance.data.datasets[0].data = data.growth_counts;
+                    usersChartInstance.update();
+
+                    const sumR = data.risk_low + data.risk_med + data.risk_high;
+                    riskChartMain.data.datasets[0].data = sumR > 0 ? [data.risk_low, data.risk_med, data.risk_high] : [1, 0, 0];
+                    riskChartMain.update();
+
+                    pomoChartMain.data.datasets[0].data = data.pomo_counts_by_day;
+                    pomoChartMain.update();
+
+                    rewardsChartMain.data.datasets[0].data = data.rewards_data;
+                    rewardsChartMain.update();
+                });
+        }
 
         // Inspección de Usuario
         function inspectUser(userId) {
@@ -775,7 +1065,7 @@
                 });
         }
 
-        // NIVEL 2 (A): Modal Mensual con gráfico clicable hacia NIVEL 3
+        // NIVEL 2 (A): Modal Mensual -> NIVEL 3
         function openMonthDrilldown(token, label) {
             activeMonthToken = token;
             fetch(`/api/month-activity/?token=${token}&label=${label}`)

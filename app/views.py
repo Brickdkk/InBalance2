@@ -17,7 +17,7 @@ def index(request):
     return render(request, 'index.html')
 
 # ==============================================================================
-# VISTA DE USUARIO Y ACCIONES INTERACTIVAS (POMODOROS, XP Y RECOMPENSAS)
+# VISTA DE USUARIO (DASHBOARD TAILWIND)
 # ==============================================================================
 
 @login_required
@@ -30,21 +30,72 @@ def user_view(request):
     total_minutes = sessions.aggregate(Sum('duration_minutes'))['duration_minutes__sum'] or 0
     study_hours = round(total_minutes / 60, 1)
 
-    # Catálogo de recompensas con costo en XP
+    level = (profile.xp // 500) + 1
+    next_level_xp = level * 500
+    xp_progress_pct = min(100, round(((profile.xp % 500) / 500) * 100, 1))
+
+    today = timezone.now().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    start_of_last_week = start_of_week - timedelta(days=7)
+
+    this_week_hours = [0.0] * 7
+    last_week_hours = [0.0] * 7
+
+    for s in sessions.filter(completed_at__date__gte=start_of_last_week):
+        s_date = s.completed_at.date()
+        hrs = round(s.duration_minutes / 60, 2)
+        if s_date >= start_of_week:
+            this_week_hours[s_date.weekday()] = round(this_week_hours[s_date.weekday()] + hrs, 1)
+        elif s_date >= start_of_last_week:
+            last_week_hours[s_date.weekday()] = round(last_week_hours[s_date.weekday()] + hrs, 1)
+
+    all_profiles = list(Profile.objects.select_related('user').order_by('-xp'))
+    total_students = len(all_profiles)
+    user_rank = 1
+    for idx, p in enumerate(all_profiles, start=1):
+        if p.user_id == request.user.id:
+            user_rank = idx
+            break
+
+    leaderboard = []
+    for idx, p in enumerate(all_profiles[:5], start=1):
+        uname = p.user.username
+        initials = uname[:2].upper() if len(uname) >= 2 else uname.upper()
+        leaderboard.append({
+            'rank': idx,
+            'username': uname,
+            'initials': initials,
+            'xp': p.xp,
+            'level': (p.xp // 500) + 1,
+            'is_me': p.user_id == request.user.id,
+        })
+
     rewards_catalog = [
-        {'key': 'pausas', 'name': 'Pausas Activas', 'desc': '10 min extra de descanso guiado', 'cost': 50, 'icon': 'bi-cup-hot-fill', 'color': 'primary'},
-        {'key': 'apuntes', 'name': 'Descarga de Apuntes', 'desc': 'Acceso a resúmenes verificados', 'cost': 100, 'icon': 'bi-file-earmark-text-fill', 'color': 'success'},
-        {'key': 'puntos', 'name': 'Puntos Extra (+150 XP)', 'desc': 'Bonificación directa a tu perfil', 'cost': 80, 'icon': 'bi-lightning-charge-fill', 'color': 'warning'},
-        {'key': 'libre', 'name': 'Horario Libre', 'desc': 'Bloque flexible sin penalización', 'cost': 200, 'icon': 'bi-calendar-check-fill', 'color': 'info'},
+        {'key': 'pausas', 'name': 'Pausas Activas', 'desc': '10 min extra de descanso guiado', 'cost': 50, 'icon': 'fa-mug-hot'},
+        {'key': 'apuntes', 'name': 'Descarga de Apuntes', 'desc': 'Acceso a resúmenes verificados', 'cost': 100, 'icon': 'fa-file-lines'},
+        {'key': 'puntos', 'name': 'Puntos Extra (+150 XP)', 'desc': 'Bonificación directa a tu perfil', 'cost': 80, 'icon': 'fa-bolt'},
+        {'key': 'libre', 'name': 'Horario Libre', 'desc': 'Bloque flexible sin penalización', 'cost': 200, 'icon': 'fa-calendar-check'},
     ]
+
+    username = request.user.username
+    initials = username[:2].upper() if len(username) >= 2 else username.upper()
 
     context = {
         'profile': profile,
+        'initials': initials,
+        'level': level,
+        'next_level_xp': next_level_xp,
+        'xp_progress_pct': xp_progress_pct,
         'total_pomos': total_pomos,
-        'total_minutes': total_minutes,
         'study_hours': study_hours,
-        'recent_sessions': sessions[:8],
-        'recent_redemptions': redemptions[:8],
+        'this_week_total': round(sum(this_week_hours), 1),
+        'this_week_hours_json': json.dumps(this_week_hours),
+        'last_week_hours_json': json.dumps(last_week_hours),
+        'user_rank': user_rank,
+        'total_students': total_students,
+        'leaderboard': leaderboard,
+        'recent_sessions': sessions[:6],
+        'recent_redemptions': redemptions[:6],
         'rewards_catalog': rewards_catalog,
     }
     return render(request, 'user.html', context)
@@ -57,8 +108,8 @@ def log_pomodoro(request):
         except ValueError:
             duration = 25
 
-        duration = max(5, min(180, duration))
-        earned_xp = duration * 2  # 2 XP por minuto estudiado
+        duration = max(5, min(300, duration))
+        earned_xp = duration * 2
 
         PomodoroSession.objects.create(
             user=request.user,
@@ -70,7 +121,7 @@ def log_pomodoro(request):
         profile.xp += earned_xp
         profile.save()
 
-        messages.success(request, f"¡Pomodoro de {duration} min registrado! Ganaste +{earned_xp} XP.")
+        messages.success(request, f"¡Sesión de {duration} min guardada! Ganaste +{earned_xp} XP.")
     return redirect('user_view')
 
 @login_required
@@ -92,7 +143,7 @@ def redeem_reward(request):
         cost = costs[reward_type]
 
         if profile.xp < cost:
-            messages.error(request, f"No tienes suficientes XP (necesitas {cost} XP y tienes {profile.xp} XP).")
+            messages.error(request, f"XP insuficiente: necesitas {cost} XP y tienes {profile.xp} XP.")
             return redirect('user_view')
 
         profile.xp -= cost
@@ -117,38 +168,34 @@ def update_my_risk(request):
             profile, _ = Profile.objects.get_or_create(user=request.user)
             profile.risk_level = risk_level
             profile.save()
-            messages.success(request, "Tu estado de carga académica fue actualizado.")
+            messages.success(request, "Estado de carga académica actualizado.")
     return redirect('user_view')
 
 # ==============================================================================
-# PANEL DE ADMINISTRADOR Y GRÁFICOS ANIDADOS
+# PANEL DE ADMINISTRADOR CON CROSS-FILTERING Y GRÁFICOS DE 3 NIVELES
 # ==============================================================================
 
-@user_passes_test(is_admin, login_url='login')
-def admin_view(request):
-    users = User.objects.select_related('profile').order_by('-date_joined')
-    total_users = users.count()
+def _build_dashboard_metrics(users_qs, pomos_qs, rewards_qs, today):
+    """Calcula métricas y series de los 4 gráficos sobre un conjunto filtrado."""
+    total_users = users_qs.count()
+    risk_low = Profile.objects.filter(user__in=users_qs, risk_level='low').count()
+    risk_med = Profile.objects.filter(user__in=users_qs, risk_level='medium').count()
+    risk_high = Profile.objects.filter(user__in=users_qs, risk_level='high').count()
 
-    risk_low = Profile.objects.filter(risk_level='low').count()
-    risk_med = Profile.objects.filter(risk_level='medium').count()
-    risk_high = Profile.objects.filter(risk_level='high').count()
-
-    today = timezone.now().date()
     seven_days_ago = today - timedelta(days=6)
-    recent_pomos = PomodoroSession.objects.filter(completed_at__date__gte=seven_days_ago)
+    recent_pomos = pomos_qs.filter(completed_at__date__gte=seven_days_ago)
 
     pomo_counts_by_day = [0] * 7
     for session in recent_pomos:
-        day_index = session.completed_at.weekday()
-        pomo_counts_by_day[day_index] += 1
+        pomo_counts_by_day[session.completed_at.weekday()] += 1
 
-    total_pomodoros = PomodoroSession.objects.count()
+    total_pomodoros = pomos_qs.count()
 
     rewards_data = [
-        RewardRedemption.objects.filter(reward_type='pausas').count(),
-        RewardRedemption.objects.filter(reward_type='apuntes').count(),
-        RewardRedemption.objects.filter(reward_type='puntos').count(),
-        RewardRedemption.objects.filter(reward_type='libre').count(),
+        rewards_qs.filter(reward_type='pausas').count(),
+        rewards_qs.filter(reward_type='apuntes').count(),
+        rewards_qs.filter(reward_type='puntos').count(),
+        rewards_qs.filter(reward_type='libre').count(),
     ]
     total_rewards = sum(rewards_data)
 
@@ -174,24 +221,104 @@ def admin_view(request):
         else:
             cutoff_date = datetime(target_year, target_month + 1, 1, tzinfo=dt_timezone.utc)
 
-        count = User.objects.filter(date_joined__lt=cutoff_date).count()
-        growth_counts.append(count)
+        growth_counts.append(users_qs.filter(date_joined__lt=cutoff_date).count())
+
+    return {
+        'total_users': total_users,
+        'risk_low': risk_low,
+        'risk_med': risk_med,
+        'risk_high': risk_high,
+        'total_pomodoros': total_pomodoros,
+        'total_rewards': total_rewards,
+        'growth_labels': growth_labels,
+        'growth_counts': growth_counts,
+        'month_tokens': month_tokens,
+        'pomo_counts_by_day': pomo_counts_by_day,
+        'rewards_data': rewards_data,
+    }
+
+@user_passes_test(is_admin, login_url='login')
+def admin_view(request):
+    users = User.objects.select_related('profile').order_by('-date_joined')
+    today = timezone.now().date()
+    metrics = _build_dashboard_metrics(
+        users,
+        PomodoroSession.objects.all(),
+        RewardRedemption.objects.all(),
+        today
+    )
 
     context = {
         'users': users,
-        'total_users': total_users,
-        'risk_high': risk_high,
-        'risk_med': risk_med,
-        'risk_low': risk_low,
-        'total_pomodoros': total_pomodoros,
-        'total_rewards': total_rewards,
-        'growth_labels_json': json.dumps(growth_labels),
-        'growth_data_json': json.dumps(growth_counts),
-        'month_tokens_json': json.dumps(month_tokens),
-        'pomos_data_json': json.dumps(pomo_counts_by_day),
-        'rewards_data_json': json.dumps(rewards_data),
+        'total_users': metrics['total_users'],
+        'risk_high': metrics['risk_high'],
+        'risk_med': metrics['risk_med'],
+        'risk_low': metrics['risk_low'],
+        'total_pomodoros': metrics['total_pomodoros'],
+        'total_rewards': metrics['total_rewards'],
+        'growth_labels_json': json.dumps(metrics['growth_labels']),
+        'growth_data_json': json.dumps(metrics['growth_counts']),
+        'month_tokens_json': json.dumps(metrics['month_tokens']),
+        'pomos_data_json': json.dumps(metrics['pomo_counts_by_day']),
+        'rewards_data_json': json.dumps(metrics['rewards_data']),
     }
     return render(request, 'admin.html', context)
+
+# API CROSS-FILTERING: Sincroniza todos los gráficos y KPIs según el filtro elegido
+@user_passes_test(is_admin)
+def cross_filter_api(request):
+    filter_type = request.GET.get('type', 'all')
+    filter_value = request.GET.get('value', '')
+    today = timezone.now().date()
+
+    users_qs = User.objects.all()
+    pomos_qs = PomodoroSession.objects.all()
+    rewards_qs = RewardRedemption.objects.all()
+    badge_label = "Vista Global (Todos los datos)"
+
+    if filter_type == 'risk' and filter_value in ['low', 'medium', 'high']:
+        risk_names = {'low': 'Bajo Riesgo', 'medium': 'Riesgo Medio', 'high': 'Alto Riesgo'}
+        users_qs = users_qs.filter(profile__risk_level=filter_value)
+        pomos_qs = pomos_qs.filter(user__in=users_qs)
+        rewards_qs = rewards_qs.filter(user__in=users_qs)
+        badge_label = f"Segmento: {risk_names[filter_value]}"
+
+    elif filter_type == 'reward' and filter_value in ['pausas', 'apuntes', 'puntos', 'libre']:
+        reward_names = {
+            'pausas': 'Pausas Activas',
+            'apuntes': 'Descarga de Apuntes',
+            'puntos': 'Puntos Extra',
+            'libre': 'Horario Libre',
+        }
+        user_ids = RewardRedemption.objects.filter(reward_type=filter_value).values_list('user_id', flat=True).distinct()
+        users_qs = users_qs.filter(id__in=user_ids)
+        pomos_qs = pomos_qs.filter(user__in=users_qs)
+        rewards_qs = rewards_qs.filter(user__in=users_qs)
+        badge_label = f"Estudiantes que canjearon: {reward_names[filter_value]}"
+
+    elif filter_type == 'day':
+        try:
+            day_idx = int(filter_value)
+            day_names = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+            seven_days_ago = today - timedelta(days=6)
+            matching_user_ids = [
+                s.user_id for s in PomodoroSession.objects.filter(completed_at__date__gte=seven_days_ago)
+                if s.completed_at.weekday() == day_idx
+            ]
+            users_qs = users_qs.filter(id__in=set(matching_user_ids))
+            pomos_qs = pomos_qs.filter(user__in=users_qs)
+            rewards_qs = rewards_qs.filter(user__in=users_qs)
+            badge_label = f"Activos el día: {day_names[day_idx]}"
+        except (ValueError, IndexError):
+            pass
+
+    metrics = _build_dashboard_metrics(users_qs, pomos_qs, rewards_qs, today)
+    metrics['filter_label'] = badge_label
+    return JsonResponse(metrics)
+
+# ==============================================================================
+# APIs PARA DRILLDOWN DE 3 NIVELES E INSPECCIÓN DE USUARIO
+# ==============================================================================
 
 @user_passes_test(is_admin)
 def user_stats_api(request, user_id):
@@ -359,6 +486,10 @@ def day_pomo_detail_api(request):
         'labels': sorted_labels,
         'counts': sorted_counts
     })
+
+# ==============================================================================
+# MANTENEDOR DE USUARIOS (CREATE, UPDATE, DELETE)
+# ==============================================================================
 
 @user_passes_test(is_admin, login_url='login')
 def create_user(request):
