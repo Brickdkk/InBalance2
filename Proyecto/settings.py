@@ -103,7 +103,7 @@ DATABASES = {
         "NAME": os.environ.get("DB_NAME", "InBalance"),
         "USER": os.environ.get("DB_USER", "ADMIN"),
         "PASSWORD": os.environ.get("DB_PASSWORD", "1234"),
-        "HOST": os.environ.get("DB_HOST", "54.227.67.84"),
+        "HOST": os.environ.get("DB_HOST", "54.164.42.70"),
         "PORT": os.environ.get("DB_PORT", "3306"),
         "CONN_MAX_AGE": 0,
         "CONN_HEALTH_CHECKS": True,
