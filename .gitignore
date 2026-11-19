@@ -13,3 +13,7 @@ Desktop.ini
 mientorno/
 venv/
 .venv/
+
+# Local SQLite database (no utilizado; el proyecto usa exclusivamente AWS MySQL)
+db.sqlite3
+*.sqlite3

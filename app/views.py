@@ -7,21 +7,30 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Sum, Count
+from django.middleware.csrf import get_token
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.cache import never_cache
 from .models import Profile, PomodoroSession, RewardRedemption
 
 def is_admin(user):
     return user.is_authenticated and user.is_staff
 
+@never_cache
+@csrf_protect
 @login_required
 def index(request):
+    get_token(request)
     return render(request, 'index.html')
 
 # ==============================================================================
 # VISTA DE USUARIO (DASHBOARD TAILWIND)
 # ==============================================================================
 
+@never_cache
+@csrf_protect
 @login_required
 def user_view(request):
+    get_token(request)
     profile, _ = Profile.objects.get_or_create(user=request.user)
     sessions = PomodoroSession.objects.filter(user=request.user).order_by('-completed_at')
     redemptions = RewardRedemption.objects.filter(user=request.user).order_by('-redeemed_at')
@@ -100,6 +109,7 @@ def user_view(request):
     }
     return render(request, 'user.html', context)
 
+@csrf_protect
 @login_required
 def log_pomodoro(request):
     if request.method == 'POST':
@@ -124,6 +134,7 @@ def log_pomodoro(request):
         messages.success(request, f"¡Sesión de {duration} min guardada! Ganaste +{earned_xp} XP.")
     return redirect('user_view')
 
+@csrf_protect
 @login_required
 def redeem_reward(request):
     if request.method == 'POST':
@@ -160,6 +171,7 @@ def redeem_reward(request):
         messages.success(request, f"¡Canjeaste '{redemption.get_reward_type_display()}' por {cost} XP!")
     return redirect('user_view')
 
+@csrf_protect
 @login_required
 def update_my_risk(request):
     if request.method == 'POST':
@@ -237,8 +249,11 @@ def _build_dashboard_metrics(users_qs, pomos_qs, rewards_qs, today):
         'rewards_data': rewards_data,
     }
 
+@never_cache
+@csrf_protect
 @user_passes_test(is_admin, login_url='login')
 def admin_view(request):
+    get_token(request)
     users = User.objects.select_related('profile').order_by('-date_joined')
     today = timezone.now().date()
     metrics = _build_dashboard_metrics(
@@ -491,6 +506,7 @@ def day_pomo_detail_api(request):
 # MANTENEDOR DE USUARIOS (CREATE, UPDATE, DELETE)
 # ==============================================================================
 
+@csrf_protect
 @user_passes_test(is_admin, login_url='login')
 def create_user(request):
     if request.method == 'POST':
@@ -530,6 +546,7 @@ def create_user(request):
         messages.success(request, f"Cuenta '{username}' creada correctamente en la base de datos.")
     return redirect('admin_view')
 
+@csrf_protect
 @user_passes_test(is_admin, login_url='login')
 def edit_user(request, user_id):
     if request.method == 'POST':
@@ -578,6 +595,7 @@ def edit_user(request, user_id):
         messages.success(request, f"Cuenta '{username}' actualizada correctamente.")
     return redirect('admin_view')
 
+@csrf_protect
 @user_passes_test(is_admin, login_url='login')
 def delete_user(request, user_id):
     if request.method == 'POST':

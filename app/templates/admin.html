@@ -4,6 +4,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>InBalance - Panel de Administración</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -834,6 +835,27 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        function getCsrfToken() {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta && meta.getAttribute('content')) {
+                return meta.getAttribute('content');
+            }
+            const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+            if (input && input.value) {
+                return input.value;
+            }
+            const cookieMatch = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]*)/);
+            return cookieMatch ? decodeURIComponent(cookieMatch[1]) : '';
+        }
+
+        function fetchWithCsrf(url, options = {}) {
+            const headers = Object.assign({
+                'X-CSRFToken': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            }, options.headers || {});
+            return fetch(url, Object.assign({ credentials: 'same-origin' }, options, { headers }));
+        }
+
         function setActiveSidebarLink(el) {
             document.querySelectorAll('.admin-sidebar .sidebar-link').forEach(link => link.classList.remove('active'));
             el.classList.add('active');
@@ -984,7 +1006,7 @@
 
         // FUNCIÓN DE CROSS-FILTERING GLOBAL (SINCRONIZA TODOS LOS GRÁFICOS)
         function applyCrossFilter(type, value, detailCallback) {
-            fetch(`/api/cross-filter/?type=${type}&value=${value}`)
+            fetchWithCsrf(`/api/cross-filter/?type=${type}&value=${value}`)
                 .then(res => res.json())
                 .then(data => {
                     // 1. Actualizar KPIs superiores
@@ -1033,7 +1055,7 @@
 
         // Inspección de Usuario
         function inspectUser(userId) {
-            fetch(`/api/user-stats/${userId}/`)
+            fetchWithCsrf(`/api/user-stats/${userId}/`)
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('mUserName').innerText = data.username;
@@ -1068,7 +1090,7 @@
         // NIVEL 2 (A): Modal Mensual -> NIVEL 3
         function openMonthDrilldown(token, label) {
             activeMonthToken = token;
-            fetch(`/api/month-activity/?token=${token}&label=${label}`)
+            fetchWithCsrf(`/api/month-activity/?token=${token}&label=${label}`)
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('mMonthTitle').innerText = `Actividad Registrada: ${data.month_label}`;
@@ -1122,7 +1144,7 @@
 
         // NIVEL 3: Sub-gráfico anidado sobre el Modal Mensual
         function openMonthRewardLevel3(token, rewardIndex) {
-            fetch(`/api/month-reward-detail/?token=${token}&reward_index=${rewardIndex}`)
+            fetchWithCsrf(`/api/month-reward-detail/?token=${token}&reward_index=${rewardIndex}`)
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('mRewardLevel3Title').innerText = `${data.reward_name} (${data.month_token})`;
@@ -1163,7 +1185,7 @@
 
         // NIVEL 2 (B): Desglose por Grupo de Riesgo
         function openRiskDrilldown(riskIndex) {
-            fetch(`/api/risk-detail/?risk_index=${riskIndex}`)
+            fetchWithCsrf(`/api/risk-detail/?risk_index=${riskIndex}`)
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('mRiskTitle').innerText = `Grupo: ${data.risk_name}`;
@@ -1203,7 +1225,7 @@
 
         // NIVEL 2 (C): Desglose por Día de la Semana
         function openDayDrilldown(dayIndex) {
-            fetch(`/api/day-pomo-detail/?day_index=${dayIndex}`)
+            fetchWithCsrf(`/api/day-pomo-detail/?day_index=${dayIndex}`)
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('mDayTitle').innerText = `Actividad del ${data.day_name}`;

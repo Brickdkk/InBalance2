@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>InBalance - Dashboard de {{ user.username }}</title>
     
     <!-- Google Fonts: Plus Jakarta Sans -->
@@ -642,6 +643,19 @@
 
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script>
+        function getCsrfToken() {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta && meta.getAttribute('content')) {
+                return meta.getAttribute('content');
+            }
+            const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+            if (input && input.value) {
+                return input.value;
+            }
+            const cookieMatch = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]*)/);
+            return cookieMatch ? decodeURIComponent(cookieMatch[1]) : '';
+        }
+
         const chartDataEl = document.getElementById('user-chart-data');
         const thisWeekArr = JSON.parse(chartDataEl.dataset.thisWeek || '[0,0,0,0,0,0,0]');
         const lastWeekArr = JSON.parse(chartDataEl.dataset.lastWeek || '[0,0,0,0,0,0,0]');

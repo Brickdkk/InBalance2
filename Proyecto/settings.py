@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 import os
 from pathlib import Path
+import pymysql
+
+pymysql.version_info = (2, 2, 8, "final", 0)
+pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,6 +34,9 @@ ALLOWED_HOSTS = ["*", ".vercel.app", "localhost", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
 ]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 
 # Application definition
@@ -64,6 +71,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
+                "django.template.context_processors.csrf",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
@@ -75,22 +83,37 @@ WSGI_APPLICATION = "Proyecto.wsgi.application"
 
 
 # Database
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-
-import pymysql
-pymysql.version_info = (2, 2, 8, "final", 0)
-pymysql.install_as_MySQLdb()
+# Uso exclusivo y permanente de la instancia MySQL alojada en AWS
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'InBalance',
-        'USER': 'ADMIN',
-        'PASSWORD': '1234',
-        'HOST': '18.215.173.52',
-        'PORT': '3306',
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "InBalance",
+        "USER": "ADMIN",
+        "PASSWORD": "1234",
+        "HOST": "18.215.173.52",
+        "PORT": "3306",
+        "CONN_HEALTH_CHECKS": True,
+        "OPTIONS": {
+            "connect_timeout": 10,
+            "charset": "utf8mb4",
+        },
     }
 }
+
+# Sesiones y CSRF respaldados en la base de datos de AWS
+IS_VERCEL = bool(os.environ.get("VERCEL"))
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = IS_VERCEL
+
+CSRF_USE_SESSIONS = True
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = IS_VERCEL
+
+MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
+
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
@@ -141,10 +164,10 @@ MAILERS = {
 
 
 # Redirigir al inicio después de iniciar sesión
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = "/"
 
 # Redirigir al login después de cerrar sesión
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = "login"
 
 # Ruta a la que redirige si alguien intenta entrar a una vista protegida
-LOGIN_URL = 'login'
+LOGIN_URL = "login"
