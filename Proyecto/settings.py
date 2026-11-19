@@ -24,16 +24,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-o4449hh6_qsa%7v@h^v7x)qieowiz-5wh7_y#s$wd3t57mzk*&"
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-o4449hh6_qsa%7v@h^v7x)qieowiz-5wh7_y#s$wd3t57mzk*&",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
 
 ALLOWED_HOSTS = ["*", ".vercel.app", "localhost", "127.0.0.1"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
 ]
+for _vercel_host in (
+    os.environ.get("VERCEL_URL"),
+    os.environ.get("VERCEL_PROJECT_PRODUCTION_URL"),
+):
+    if _vercel_host:
+        _origin = _vercel_host if _vercel_host.startswith("http") else f"https://{_vercel_host}"
+        if _origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_origin)
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
@@ -53,6 +64,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -88,11 +100,12 @@ WSGI_APPLICATION = "Proyecto.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "InBalance",
-        "USER": "ADMIN",
-        "PASSWORD": "1234",
-        "HOST": "54.227.67.84",
-        "PORT": "3306",
+        "NAME": os.environ.get("DB_NAME", "InBalance"),
+        "USER": os.environ.get("DB_USER", "ADMIN"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "1234"),
+        "HOST": os.environ.get("DB_HOST", "54.227.67.84"),
+        "PORT": os.environ.get("DB_PORT", "3306"),
+        "CONN_MAX_AGE": 0,
         "CONN_HEALTH_CHECKS": True,
         "OPTIONS": {
             "connect_timeout": 10,
@@ -151,6 +164,7 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+WHITENOISE_USE_FINDERS = True
 
 
 # Email
