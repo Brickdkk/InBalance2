@@ -91,7 +91,7 @@ DATABASES = {
         "NAME": "InBalance",
         "USER": "ADMIN",
         "PASSWORD": "1234",
-        "HOST": "18.215.173.52",
+        "HOST": "54.227.67.84",
         "PORT": "3306",
         "CONN_HEALTH_CHECKS": True,
         "OPTIONS": {
